@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>딸깍 — 로그인 / 회원가입</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#EEF3FF',100:'#D9E5FF',200:'#B3CBFF',400:'#4880FF',500:'#1952D9',600:'#1441B5',700:'#0F318F' },
+            amber:  { 500:'#F5621A',600:'#D9500F' },
+            ink:    { DEFAULT:'#0C0B09',2:'#2D2C2A',3:'#6B6A68',4:'#9C9B99',5:'#C8C7C5',6:'#E5E4E1',7:'#F2F1EE',8:'#F9F8F6' },
+            ok:     { DEFAULT:'#059669', light:'#DCFCE7' },
+          },
+          fontFamily: {
+            display: ['"Black Han Sans"','sans-serif'],
+            body:    ['"DM Sans"','system-ui','sans-serif'],
+            mono:    ['"DM Mono"','monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <script src="/db.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: #F5F3EE; color: #0C0B09; -webkit-font-smoothing: antialiased; overflow-x: hidden; min-height: 100vh; }
+    a { text-decoration: none; color: inherit; }
+
+    .tc { transition:color 0.15s ease; }
+    .tb { transition:background 0.15s ease; }
+
+    button:focus-visible, a:focus-visible, input:focus-visible { outline:2px solid #1952D9;outline-offset:3px;border-radius:6px; }
+
+    /* Left panel */
+    .panel-left { background:#F5F3EE;position:relative;overflow:hidden;border-right:1px solid #E5E4E1; }
+    .panel-left::before { display:none; }
+
+    /* Form panel */
+    .form-panel { position:relative;z-index:1; }
+
+    /* Toggle pill */
+    .toggle-track { background:#F2F1EE;border-radius:999px;padding:3px;display:flex;gap:2px; }
+    .toggle-option {
+      flex:1;text-align:center;padding:7px 20px;border-radius:999px;font-size:13.5px;font-weight:500;
+      cursor:pointer;
+      transition:background 0.2s,color 0.2s,box-shadow 0.2s;
+      color:#6B6A68;
+    }
+    .toggle-option.active { background:#fff;color:#0C0B09;box-shadow:0 1px 4px rgba(0,0,0,0.1); }
+
+    /* Input */
+    .field { position:relative; }
+    .field input, .field select {
+      width:100%;padding:11px 14px;border:1.5px solid #E5E4E1;border-radius:10px;
+      font-size:14px;font-family:'DM Sans',system-ui,sans-serif;
+      background:#fff;color:#0C0B09;
+      transition:border-color 0.15s,box-shadow 0.15s;
+      outline:none;
+    }
+    .field input:focus, .field select:focus { border-color:#1952D9;box-shadow:0 0 0 3px rgba(25,82,217,0.1); }
+    .field input::placeholder { color:#9C9B99; }
+    .field label { display:block;font-size:12.5px;font-weight:600;color:#6B6A68;margin-bottom:5px;letter-spacing:0.03em;text-transform:uppercase; }
+
+    /* Primary button */
+    .btn-primary {
+      width:100%;padding:13px 20px;border-radius:10px;
+      background:#1952D9;color:#fff;font-size:15px;font-weight:600;
+      border:none;cursor:pointer;position:relative;overflow:hidden;
+      transition:background 0.15s,transform 0.12s,box-shadow 0.15s;
+      box-shadow:0 2px 8px rgba(25,82,217,0.3),0 1px 2px rgba(25,82,217,0.2);
+    }
+    .btn-primary:hover { background:#1441B5;box-shadow:0 4px 16px rgba(25,82,217,0.35),0 1px 4px rgba(25,82,217,0.2); }
+    .btn-primary:active { transform:scale(0.99); }
+    .btn-primary::after { content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.15) 50%,transparent 65%);transform:translateX(-100%);transition:transform 0.5s ease; }
+    .btn-primary:hover::after { transform:translateX(100%); }
+
+    /* Divider */
+    .divider { display:flex;align-items:center;gap:12px;color:#9C9B99;font-size:12.5px; }
+    .divider::before,.divider::after { content:'';flex:1;height:1px;background:#E5E4E1; }
+
+    /* Social button */
+    .btn-social {
+      width:100%;padding:11px 20px;border-radius:10px;border:1.5px solid #E5E4E1;
+      background:#fff;color:#2D2C2A;font-size:13.5px;font-weight:500;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:border-color 0.15s,background 0.15s;
+    }
+    .btn-social:hover { border-color:#9C9B99;background:#F9F8F6; }
+
+    /* Tab mode (login vs signup) */
+    .tab-link { font-size:13.5px;color:#6B6A68;cursor:pointer;padding-bottom:3px;border-bottom:2px solid transparent; }
+    .tab-link.active { color:#1952D9;border-color:#1952D9;font-weight:600; }
+
+    /* Password strength bar */
+    .strength-bar { height:3px;border-radius:2px;background:#E5E4E1;overflow:hidden; }
+    .strength-fill { height:100%;border-radius:2px;transition:width 0.3s,background 0.3s;width:0%; }
+
+    /* Fade in */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .fade-up { animation:fadeUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+    .fd0 { animation-delay:0.05s } .fd1 { animation-delay:0.12s } .fd2 { animation-delay:0.19s }
+    .fd3 { animation-delay:0.26s } .fd4 { animation-delay:0.33s } .fd5 { animation-delay:0.4s }
+
+    /* Floating stat cards */
+    @keyframes floatA { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(-2deg)} }
+    @keyframes floatB { 0%,100%{transform:translateY(0) rotate(1.5deg)} 50%{transform:translateY(-12px) rotate(1.5deg)} }
+    .fa { animation:floatA 4.5s ease-in-out infinite; }
+    .fb { animation:floatB 3.8s ease-in-out 1.8s infinite; }
+
+    /* Validation */
+    .field-error input, .field-error select { border-color:#EF4444; }
+    .field-error .err-msg { display:block; }
+    .err-msg { display:none;font-size:11.5px;color:#EF4444;margin-top:4px; }
+
+    /* Email domain hint */
+    .domain-hint { position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:#9C9B99;pointer-events:none;font-family:'DM Mono',monospace; }
+
+    /* Progress steps (signup) */
+    .step-dot { width:8px;height:8px;border-radius:50%;background:#E5E4E1;transition:background 0.2s,transform 0.2s; }
+    .step-dot.active { background:#1952D9;transform:scale(1.25); }
+    .step-dot.done { background:#059669; }
+  </style>
+</head>
+<body>
+<div class="min-h-screen flex">
+
+  <!-- ── Left Panel ──────────────────────────────────────────── -->
+  <div class="panel-left hidden lg:flex flex-col justify-between w-[46%] min-h-screen p-12">
+    <div class="relative z-10">
+      <a href="index.html" class="font-display text-[24px] text-ink">딸깍<span class="text-brand-500">.</span></a>
+    </div>
+
+    <div class="relative z-10 space-y-8">
+      <!-- Headline -->
+      <div>
+        <p class="text-brand-500 text-sm font-mono font-medium mb-4 tracking-widest uppercase">인턴십, 이제 다르게</p>
+        <h1 class="font-display text-[42px] leading-[1.1] text-ink">
+          한 번 지원으로<br>
+          <span class="text-brand-500">열 군데</span> 동시에.
+        </h1>
+        <p class="mt-5 text-ink-3 text-[15px] leading-[1.8] max-w-[340px]">
+          학교 이메일 하나로 가입하면,<br>딸깍이 맞는 스타트업을 연결해드립니다.
+        </p>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="relative h-48">
+        <div class="fa absolute top-0 left-0 bg-white border border-ink-6 rounded-2xl p-4 w-48 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+          <div class="text-ink-4 text-xs font-mono mb-1">ACTIVE COMPANIES</div>
+          <div class="font-display text-3xl text-ink">847</div>
+          <div class="text-ok text-xs mt-1 font-medium">↑ 스타트업 & 중소기업</div>
+        </div>
+        <div class="fb absolute bottom-0 right-8 bg-brand-50 border border-brand-100 rounded-2xl p-4 w-44">
+          <div class="text-brand-500 text-xs font-mono mb-1">AVG. RESPONSE</div>
+          <div class="font-display text-3xl text-ink">3<span class="text-lg">일</span></div>
+          <div class="text-ink-4 text-xs mt-1">지원 후 평균 응답 속도</div>
+        </div>
+      </div>
+
+      <!-- Testimonial -->
+      <div class="border border-ink-6 rounded-2xl p-5 bg-white">
+        <p class="text-ink-2 text-[14px] leading-[1.8] italic">
+          "딸깍 쓰기 전엔 자소서 쓰는 데만 하루가 갔어요.<br>지금은 30분이면 다섯 군데 지원 완료."
+        </p>
+        <div class="flex items-center gap-3 mt-4">
+          <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white text-xs font-bold">김</div>
+          <div>
+            <div class="text-ink text-sm font-medium">김민서</div>
+            <div class="text-ink-4 text-xs">연세대 경영 3학년</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="relative z-10">
+      <p class="text-ink-5 text-xs">© 2025 딸깍. All rights reserved.</p>
+    </div>
+  </div>
+
+  <!-- ── Right Panel — Form ───────────────────────────────────── -->
+  <div class="form-panel flex-1 flex items-center justify-center p-6 lg:p-12 bg-white" style="border-radius:0 16px 16px 0">
+    <div class="w-full max-w-[420px]">
+
+      <!-- Mobile logo -->
+      <div class="lg:hidden mb-8">
+        <a href="index.html" class="font-display text-[22px] text-ink">딸깍<span class="text-brand-500">.</span></a>
+      </div>
+
+      <!-- Mode tabs -->
+      <div class="flex items-center gap-6 mb-8 fade-up fd0">
+        <button class="tab-link active" id="tab-login" onclick="setMode('login')">로그인</button>
+        <button class="tab-link" id="tab-signup" onclick="setMode('signup')">회원가입</button>
+      </div>
+
+      <!-- ── LOGIN FORM ── -->
+      <div id="form-login" class="space-y-5">
+
+        <!-- User type toggle -->
+        <div class="fade-up fd1">
+          <div class="toggle-track">
+            <div class="toggle-option active" id="lt-student" onclick="setUserType('student','login')">학생</div>
+            <div class="toggle-option" id="lt-company" onclick="setUserType('company','login')">기업</div>
+          </div>
+        </div>
+
+        <div class="fade-up fd2 field">
+          <label>이메일</label>
+          <input type="email" id="login-email" placeholder="학교 이메일 또는 회사 이메일" autocomplete="email" />
+        </div>
+
+        <div class="fade-up fd3 field">
+          <label>비밀번호</label>
+          <div class="relative">
+            <input type="password" id="login-pw" placeholder="비밀번호 입력" autocomplete="current-password" />
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink-3 tc" onclick="togglePw('login-pw',this)">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="fade-up fd4 flex items-center justify-between">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" class="w-4 h-4 rounded accent-brand-500">
+            <span class="text-[13px] text-ink-3">로그인 유지</span>
+          </label>
+          <a href="#" class="text-[13px] text-brand-500 hover:text-brand-600 tc font-medium">비밀번호 찾기</a>
+        </div>
+
+        <div class="fade-up fd5">
+          <button class="btn-primary" onclick="handleLogin()">로그인</button>
+          <p id="login-error" class="hidden mt-2.5 text-[12.5px] text-red-500 text-center"></p>
+        </div>
+
+        <div class="fade-up fd5 divider">또는</div>
+
+        <div class="fade-up fd5 space-y-2.5">
+          <button class="btn-social">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google로 계속하기
+          </button>
+          <button class="btn-social" style="background:#FEE500;border-color:#FEE500;color:#191919;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.646 5.079 4.152 6.504L5.1 21l4.583-2.438C10.395 18.846 11.185 19 12 19c5.523 0 10-3.477 10-7.8C22 6.477 17.523 3 12 3z"/></svg>
+            카카오로 계속하기
+          </button>
+        </div>
+
+        <p class="fade-up fd5 text-center text-[13px] text-ink-4">
+          계정이 없으신가요? <button class="text-brand-500 font-medium hover:text-brand-600 tc" onclick="setMode('signup')">무료 가입</button>
+        </p>
+      </div>
+
+      <!-- ── SIGNUP FORM ── -->
+      <div id="form-signup" class="hidden space-y-5">
+
+        <!-- Step indicator -->
+        <div class="flex items-center gap-2 mb-6 fade-up fd0">
+          <div class="step-dot active" id="sdot-0"></div>
+          <div class="step-dot" id="sdot-1"></div>
+          <div class="step-dot" id="sdot-2"></div>
+          <span class="ml-2 text-xs text-ink-4 font-mono" id="step-label">1 / 3</span>
+        </div>
+
+        <!-- User type toggle -->
+        <div class="fade-up fd0">
+          <div class="toggle-track">
+            <div class="toggle-option active" id="st-student" onclick="setUserType('student','signup')">학생</div>
+            <div class="toggle-option" id="st-company" onclick="setUserType('company','signup')">기업</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Basic info -->
+        <div id="signup-step-1" class="space-y-4">
+          <div class="fade-up fd1 field" id="f-name">
+            <label id="name-label">이름</label>
+            <input type="text" id="su-name" placeholder="홍길동" autocomplete="name" />
+            <span class="err-msg">이름을 입력해주세요.</span>
+          </div>
+          <div class="fade-up fd2 field" id="f-email">
+            <label id="email-label">학교 이메일</label>
+            <div class="relative">
+              <input type="email" id="su-email" placeholder="example@yonsei.ac.kr" autocomplete="email" oninput="checkEmailDomain(this)" />
+              <span class="domain-hint" id="domain-badge"></span>
+            </div>
+            <span class="err-msg" id="email-err">유효한 이메일을 입력해주세요.</span>
+          </div>
+          <div class="fade-up fd3 field" id="f-pw">
+            <label>비밀번호</label>
+            <div class="relative">
+              <input type="password" id="su-pw" placeholder="8자 이상" autocomplete="new-password" oninput="checkStrength(this)" />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink-3 tc" onclick="togglePw('su-pw',this)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="strength-bar mt-2"><div class="strength-fill" id="pw-strength"></div></div>
+            <span class="err-msg" id="pw-err">비밀번호는 8자 이상이어야 합니다.</span>
+          </div>
+
+          <!-- Student only -->
+          <div id="student-fields" class="space-y-4">
+            <div class="fade-up fd4 field">
+              <label>학교</label>
+              <select id="su-school">
+                <option value="">학교를 선택해주세요</option>
+              </select>
+            </div>
+            <div class="fade-up fd5 grid grid-cols-2 gap-3">
+              <div class="field">
+                <label>학년</label>
+                <select id="su-year">
+                  <option value="">선택</option>
+                  <option>1학년</option><option>2학년</option><option>3학년</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>전공</label>
+                <input type="text" id="su-major" placeholder="컴퓨터공학" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Company only -->
+          <div id="company-fields" class="hidden space-y-4">
+            <div class="fade-up fd4 field">
+              <label>회사명</label>
+              <input type="text" id="su-company" placeholder="(주) 딸깍" />
+            </div>
+            <div class="fade-up fd5 field">
+              <label>사업자등록번호</label>
+              <input type="text" id="su-bizno" placeholder="000-00-00000" />
+            </div>
+          </div>
+
+          <div class="fade-up fd5">
+            <button class="btn-primary" onclick="nextStep()">다음 단계 →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Profile details -->
+        <div id="signup-step-2" class="hidden space-y-4">
+          <div class="fade-up fd0">
+            <p class="text-sm text-ink-3 mb-4">프로필을 완성하면 기업 매칭 정확도가 높아집니다.</p>
+          </div>
+
+          <!-- Student only -->
+          <div id="student-fields-2" class="space-y-4">
+            <div class="fade-up fd1 field">
+              <label>관심 직무 (최대 3개)</label>
+              <div class="flex flex-wrap gap-2 mt-1" id="job-tags">
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">개발</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">디자인</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">마케팅</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">기획</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">데이터</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">영업</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">재무</button>
+                <button type="button" class="job-tag px-3 py-1.5 rounded-full text-[12.5px] border border-ink-6 text-ink-3 hover:border-brand-500 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="toggleTag(this)">콘텐츠</button>
+              </div>
+            </div>
+            <div class="fade-up fd2 field">
+              <label>한 줄 소개</label>
+              <input type="text" id="su-bio" placeholder="UX에 관심 많은 경영학도입니다" maxlength="60" />
+              <div class="text-right text-[11px] text-ink-4 mt-1 font-mono" id="bio-count">0 / 60</div>
+            </div>
+            <div class="fade-up fd3 field">
+              <label>GitHub / 포트폴리오 (선택)</label>
+              <input type="url" id="su-portfolio" placeholder="https://github.com/..." />
+            </div>
+          </div>
+
+          <!-- Company only step 2 -->
+          <div id="company-fields-2" class="hidden space-y-4">
+            <div class="fade-up fd1 field">
+              <label>회사 설명</label>
+              <input type="text" id="su-cdesc" placeholder="어떤 서비스를 만드나요?" maxlength="80" />
+            </div>
+            <div class="fade-up fd2 field">
+              <label>팀 규모</label>
+              <select id="su-size">
+                <option>1-10명</option><option>11-50명</option><option>51-200명</option><option>200명 이상</option>
+              </select>
+            </div>
+            <div class="fade-up fd3 field">
+              <label>채용 포지션</label>
+              <input type="text" id="su-position" placeholder="프론트엔드 개발자 인턴" />
+            </div>
+          </div>
+
+          <div class="fade-up fd4 flex gap-3">
+            <button class="flex-1 py-3 rounded-10px border border-ink-6 text-sm font-medium text-ink-3 hover:bg-ink-8 tb" style="border-radius:10px" onclick="prevStep()">← 이전</button>
+            <button class="flex-1 btn-primary" style="width:auto" onclick="nextStep()">다음 →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Confirm -->
+        <div id="signup-step-3" class="hidden space-y-5 text-center">
+          <div class="fade-up fd0">
+            <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto mb-4">
+              <svg width="28" height="28" fill="none" stroke="#1952D9" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-ink mb-2">거의 다 됐어요!</h2>
+            <p class="text-[14px] text-ink-3">입력하신 이메일로 인증 메일을 보냈습니다.<br>이메일을 확인하고 가입을 완료해주세요.</p>
+          </div>
+
+          <div class="fade-up fd1 bg-ink-8 rounded-xl p-4 text-left space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-ink-3">이메일</span>
+              <span class="font-medium text-ink" id="confirm-email">—</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-ink-3">유형</span>
+              <span class="font-medium text-ink" id="confirm-type">학생</span>
+            </div>
+            <div class="flex justify-between text-sm" id="confirm-school-row">
+              <span class="text-ink-3">학교</span>
+              <span class="font-medium text-ink" id="confirm-school">—</span>
+            </div>
+          </div>
+
+          <div class="fade-up fd2">
+            <a href="app-student.html" id="go-to-app" class="btn-primary block" style="padding:13px 20px;border-radius:10px;font-size:15px;font-weight:600;text-align:center">
+              대시보드로 이동 →
+            </a>
+          </div>
+
+          <p class="fade-up fd3 text-xs text-ink-4">이메일이 오지 않았나요? <button class="text-brand-500 font-medium tc hover:text-brand-600">재발송</button></p>
+        </div>
+
+        <p class="fade-up fd5 text-center text-[13px] text-ink-4">
+          이미 계정이 있으신가요? <button class="text-brand-500 font-medium hover:text-brand-600 tc" onclick="setMode('login')">로그인</button>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── URL param detect ──────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  let currentMode = 'login';
+  let currentUserType = 'student';
+  let currentStep = 1;
+
+  if(params.get('signup')){ setMode('signup'); setUserType(params.get('signup')||'student','signup'); }
+
+  function setMode(mode){
+    currentMode = mode;
+    document.getElementById('form-login').classList.toggle('hidden', mode!=='login');
+    document.getElementById('form-signup').classList.toggle('hidden', mode!=='signup');
+    document.getElementById('tab-login').classList.toggle('active', mode==='login');
+    document.getElementById('tab-signup').classList.toggle('active', mode==='signup');
+    currentStep = 1;
+    showStep(1);
+  }
+
+  function setUserType(type, context){
+    currentUserType = type;
+    const prefix = context==='login' ? 'lt' : 'st';
+    document.getElementById(prefix+'-student').classList.toggle('active', type==='student');
+    document.getElementById(prefix+'-company').classList.toggle('active', type==='company');
+
+    if(context==='signup'){
+      document.getElementById('student-fields').classList.toggle('hidden', type!=='student');
+      document.getElementById('company-fields').classList.toggle('hidden', type!=='company');
+      document.getElementById('student-fields-2').classList.toggle('hidden', type!=='student');
+      document.getElementById('company-fields-2').classList.toggle('hidden', type!=='company');
+
+      const emailLabel = document.getElementById('email-label');
+      const nameLabel = document.getElementById('name-label');
+      if(type==='student'){
+        emailLabel.textContent='학교 이메일';
+        nameLabel.textContent='이름';
+        document.getElementById('su-email').placeholder='example@yonsei.ac.kr';
+      } else {
+        emailLabel.textContent='회사 이메일';
+        nameLabel.textContent='담당자 이름';
+        document.getElementById('su-email').placeholder='hr@company.com';
+      }
+    }
+    if(context==='login'){
+      const emailInput = document.getElementById('login-email');
+      emailInput.placeholder = type==='student' ? '학교 이메일 또는 개인 이메일' : '회사 이메일';
+    }
+    // Update confirm page link
+    document.getElementById('go-to-app').href = type==='company' ? 'app-company.html' : 'app-student.html';
+    document.getElementById('confirm-type').textContent = type==='company' ? '기업' : '학생';
+    document.getElementById('confirm-school-row').classList.toggle('hidden', type!=='student');
+  }
+
+  function nextStep(){
+    if(currentStep === 1){
+      let valid = true;
+
+      const name = document.getElementById('su-name').value.trim();
+      const fName = document.getElementById('f-name');
+      if(!name){ fName.classList.add('field-error'); valid=false; }
+      else fName.classList.remove('field-error');
+
+      const email = document.getElementById('su-email').value.trim();
+      const fEmail = document.getElementById('f-email');
+      const emailErr = document.getElementById('email-err');
+      if(!email || !email.includes('@')){
+        fEmail.classList.add('field-error'); emailErr.textContent='유효한 이메일을 입력해주세요.'; valid=false;
+      } else if(DB.auth.emailExists(email)){
+        fEmail.classList.add('field-error'); emailErr.textContent='이미 가입된 이메일입니다.'; valid=false;
+      } else { fEmail.classList.remove('field-error'); }
+
+      const pw = document.getElementById('su-pw').value;
+      const fPw = document.getElementById('f-pw');
+      if(pw.length < 8){ fPw.classList.add('field-error'); valid=false; }
+      else fPw.classList.remove('field-error');
+
+      if(!valid) return;
+    }
+
+    if(currentStep < 3){
+      currentStep++;
+      showStep(currentStep);
+      if(currentStep === 3) completeSignup();
+    }
+  }
+  function prevStep(){
+    if(currentStep > 1){ currentStep--; showStep(currentStep); }
+  }
+
+  function showStep(n){
+    for(let i=1;i<=3;i++){
+      const el = document.getElementById('signup-step-'+i);
+      if(el) el.classList.toggle('hidden', i!==n);
+    }
+    // Step dots
+    for(let i=0;i<3;i++){
+      const d = document.getElementById('sdot-'+i);
+      if(i < n-1) { d.classList.add('done'); d.classList.remove('active'); }
+      else if(i===n-1) { d.classList.add('active'); d.classList.remove('done'); }
+      else { d.classList.remove('active','done'); }
+    }
+    document.getElementById('step-label').textContent = n+' / 3';
+  }
+
+  function completeSignup(){
+    const email = document.getElementById('su-email').value.trim();
+    const pw = document.getElementById('su-pw').value;
+    const name = document.getElementById('su-name').value.trim();
+    const type = currentUserType;
+
+    const emailResult = DB.resolveEmailDomain(email);
+    let schoolId = document.getElementById('su-school')?.value || '';
+    let schoolName = '기타';
+    let schoolColor = null;
+
+    if(emailResult && emailResult.matched && emailResult.uni){
+      schoolId = emailResult.uni.id;
+      schoolName = emailResult.uni.name;
+      schoolColor = emailResult.uni.color;
+    } else if(schoolId && schoolId !== '' && schoolId !== 'other'){
+      const uni = DB.universities.find(u => u.id === schoolId);
+      if(uni){ schoolName = uni.name; schoolColor = uni.color; }
+    }
+
+    const userData = {
+      email, password: pw, name, type,
+      schoolId, schoolName, schoolColor,
+      bio: document.getElementById('su-bio')?.value.trim() || '',
+      year: document.getElementById('su-year')?.value || '',
+      major: document.getElementById('su-major')?.value.trim() || '',
+      portfolio: document.getElementById('su-portfolio')?.value.trim() || '',
+      companyName: document.getElementById('su-company')?.value.trim() || '',
+      bizno: document.getElementById('su-bizno')?.value.trim() || '',
+      interests: [...selectedTags],
+      avatar: name[0] || '?',
+      profileCompletion: 65,
+      verified: !!(emailResult && emailResult.matched),
+      createdAt: Date.now(),
+    };
+
+    DB.auth.saveUser(userData);
+
+    document.getElementById('confirm-email').textContent = email || '—';
+    document.getElementById('confirm-type').textContent = type === 'company' ? '기업' : '학생';
+    if(type === 'student'){
+      document.getElementById('confirm-school').textContent = schoolName;
+      document.getElementById('confirm-school-row').classList.remove('hidden');
+    } else {
+      document.getElementById('confirm-school-row').classList.add('hidden');
+    }
+    document.getElementById('go-to-app').href = type === 'company' ? 'app-company.html' : 'app-student.html';
+  }
+
+  // ── Email domain detection (DB 기반) ─────────────────────────
+  function checkEmailDomain(input){
+    const badge = document.getElementById('domain-badge');
+    const schoolSel = document.getElementById('su-school');
+    const result = DB.resolveEmailDomain(input.value);
+    let swatch = document.getElementById('school-color-swatch');
+
+    if(result && result.matched && result.uni){
+      badge.textContent = '✓ ' + result.name;
+      badge.style.color = '#059669';
+      if(schoolSel) schoolSel.value = result.uni.id;
+      if(!swatch){
+        swatch = document.createElement('div');
+        swatch.id = 'school-color-swatch';
+        const emailField = document.getElementById('f-email');
+        emailField.after(swatch);
+      }
+      swatch.style.display = '';
+      swatch.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:${result.uni.color}18;border:1px solid ${result.uni.color}40;margin-top:6px">
+        <div style="width:14px;height:14px;border-radius:3px;background:${result.uni.color};flex-shrink:0"></div>
+        <span style="font-size:12px;color:#6B6A68"><strong style="color:#0C0B09">${result.uni.name}</strong> · 로그인 후 이 색상으로 테마가 변경돼요</span>
+      </div>`;
+    } else {
+      badge.textContent = result ? '학교 이메일' : '';
+      badge.style.color = '#6B6A68';
+      if(swatch) swatch.style.display = 'none';
+    }
+  }
+
+  // ── 학교 select 동적 생성 ─────────────────────────────────────
+  (function(){
+    const sel = document.getElementById('su-school');
+    DB.universities.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = u.name + (u.region ? ' (' + u.region + ')' : '');
+      sel.appendChild(o);
+    });
+    const other = document.createElement('option');
+    other.value = 'other'; other.textContent = '기타';
+    sel.appendChild(other);
+  })();
+
+  // ── Password strength ─────────────────────────────────────────
+  function checkStrength(input){
+    const v = input.value;
+    const bar = document.getElementById('pw-strength');
+    let score = 0;
+    if(v.length >= 8) score++;
+    if(/[A-Z]/.test(v)) score++;
+    if(/[0-9]/.test(v)) score++;
+    if(/[^A-Za-z0-9]/.test(v)) score++;
+    const w = [0,30,55,78,100][score];
+    const c = ['','#EF4444','#F59E0B','#F5621A','#059669'][score];
+    bar.style.width = w+'%';
+    bar.style.background = c;
+  }
+
+  // ── Toggle password visibility ────────────────────────────────
+  function togglePw(id, btn){
+    const inp = document.getElementById(id);
+    const isText = inp.type==='text';
+    inp.type = isText ? 'password' : 'text';
+    btn.innerHTML = isText
+      ? '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+      : '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  }
+
+  // ── Job tag toggle ────────────────────────────────────────────
+  let selectedTags = [];
+  function toggleTag(btn){
+    const tag = btn.textContent.trim();
+    if(btn.classList.contains('selected')){
+      btn.classList.remove('selected');
+      btn.style.background='';btn.style.borderColor='';btn.style.color='';
+      selectedTags = selectedTags.filter(t=>t!==tag);
+    } else {
+      if(selectedTags.length >= 3) return;
+      btn.classList.add('selected');
+      btn.style.background='#EEF3FF';btn.style.borderColor='#1952D9';btn.style.color='#1952D9';
+      selectedTags.push(tag);
+    }
+  }
+
+  // ── Bio counter ───────────────────────────────────────────────
+  const bioInput = document.getElementById('su-bio');
+  const bioCount = document.getElementById('bio-count');
+  if(bioInput) bioInput.addEventListener('input',()=>{ bioCount.textContent=(bioInput.value.length)+' / 60'; });
+
+  // ── Handle login ──────────────────────────────────────────────
+  function handleLogin(){
+    const email = document.getElementById('login-email').value.trim();
+    const pw = document.getElementById('login-pw').value;
+    const errEl = document.getElementById('login-error');
+
+    if(!email || !pw){
+      errEl.textContent = '이메일과 비밀번호를 입력해주세요.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    const user = DB.auth.findUser(email, pw);
+    if(!user){
+      errEl.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    errEl.classList.add('hidden');
+    DB.auth.saveUser(user);
+    window.location.href = user.type === 'company' ? 'app-company.html' : 'app-student.html';
+  }
+</script>
+</body>
+</html>

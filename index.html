@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>딸깍 — 인턴십, 이제 다르게</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#EEF3FF',100:'#D9E5FF',200:'#B3CBFF',400:'#4880FF',500:'#1952D9',600:'#1441B5',700:'#0F318F' },
+            amber:  { 500:'#F5621A',600:'#D9500F' },
+            ink:    { DEFAULT:'#0C0B09',2:'#2D2C2A',3:'#6B6A68',4:'#9C9B99',5:'#C8C7C5',6:'#E5E4E1',7:'#F2F1EE',8:'#F9F8F6' },
+            ok:     { DEFAULT:'#059669', light:'#DCFCE7' },
+          },
+          fontFamily: {
+            display: ['"Black Han Sans"','sans-serif'],
+            body:    ['"DM Sans"','system-ui','sans-serif'],
+            mono:    ['"DM Mono"','monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: #fff; color: #0C0B09; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Word Reveal Animation ─────────────────────── */
+    .word-mask { overflow:hidden;display:inline-block;vertical-align:bottom; }
+    .word-inner { display:inline-block;animation:wReveal 0.75s cubic-bezier(0.16,1,0.3,1) both; }
+    @keyframes wReveal { from{transform:translateY(105%);opacity:0} to{transform:translateY(0);opacity:1} }
+    .d0{animation-delay:0.05s} .d1{animation-delay:0.15s} .d2{animation-delay:0.25s}
+    .d3{animation-delay:0.35s} .d4{animation-delay:0.45s} .d5{animation-delay:0.55s}
+    .d6{animation-delay:0.65s} .d7{animation-delay:0.75s} .d8{animation-delay:0.85s}
+
+    /* ── Fade up on scroll ─────────────────────────── */
+    .up { opacity:0;transform:translateY(28px);transition:opacity 0.65s cubic-bezier(0.16,1,0.3,1),transform 0.65s cubic-bezier(0.16,1,0.3,1); }
+    .up.show { opacity:1;transform:translateY(0); }
+
+    /* ── Float cards ───────────────────────────────── */
+    @keyframes floatA { 0%,100%{transform:translateY(0) rotate(-1.5deg)} 50%{transform:translateY(-10px) rotate(-1.5deg)} }
+    @keyframes floatB { 0%,100%{transform:translateY(0) rotate(1deg)}   50%{transform:translateY(-14px) rotate(1deg)} }
+    .float-a { animation:floatA 4.2s ease-in-out infinite; }
+    .float-b { animation:floatB 3.8s ease-in-out 1.5s infinite; }
+
+    /* ── Live dot ──────────────────────────────────── */
+    @keyframes livePing { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.6);opacity:0.5} }
+    .live { animation:livePing 2s ease-in-out infinite; }
+
+    /* ── Marquee ───────────────────────────────────── */
+    @keyframes mar { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .mar-track { animation:mar 22s linear infinite;display:flex;width:max-content; }
+    .mar-track:hover { animation-play-state:paused; }
+
+    /* ── Nav blur ──────────────────────────────────── */
+    #nav { transition:background 0.25s, box-shadow 0.25s; }
+    #nav.scrolled { background:rgba(255,255,255,0.92)!important;backdrop-filter:blur(16px);box-shadow:0 1px 0 #E5E4E1,0 4px 20px rgba(12,11,9,0.05); }
+
+    /* ── Bento card tilt ───────────────────────────── */
+    .bento { transition:box-shadow 0.25s,transform 0.25s cubic-bezier(0.16,1,0.3,1); transform-style:preserve-3d; }
+    .bento:hover { box-shadow:0 16px 48px rgba(25,82,217,0.12),0 2px 8px rgba(0,0,0,0.06); }
+
+    /* ── Magnetic CTA ──────────────────────────────── */
+    .mag { transition:transform 0.25s cubic-bezier(0.16,1,0.3,1); }
+
+    /* ── Section clip reveal ───────────────────────── */
+    .clip-reveal { clip-path:inset(0 0 100% 0);transition:clip-path 0.8s cubic-bezier(0.16,1,0.3,1); }
+    .clip-reveal.show { clip-path:inset(0 0 0% 0); }
+
+    /* ── Noise overlay ─────────────────────────────── */
+    .noise::after { content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0; }
+
+    /* ── Counter scramble ──────────────────────────── */
+    .counter-done { animation:countBounce 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes countBounce { 0%{transform:scale(0.85)} 60%{transform:scale(1.05)} 100%{transform:scale(1)} }
+
+    /* ── Step line connector ───────────────────────── */
+    .step-item:not(:last-child)::after { content:'';display:block;width:2px;height:24px;background:linear-gradient(to bottom,#E5E4E1,transparent);margin:6px 0 6px 18px; }
+
+    /* ── Transition shortcuts ──────────────────────── */
+    .tc { transition:color 0.15s ease; }
+    .tb { transition:background 0.15s ease; }
+    .tbo { transition:border-color 0.15s ease; }
+    .to { transition:opacity 0.15s ease; }
+
+    /* ── Focus visible ─────────────────────────────── */
+    button:focus-visible,a:focus-visible { outline:2px solid #1952D9;outline-offset:3px;border-radius:6px; }
+
+    /* ── Shimmer button ────────────────────────────── */
+    .shimmer { position:relative;overflow:hidden; }
+    .shimmer::after { content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.2) 50%,transparent 65%);transform:translateX(-100%);transition:transform 0.5s ease; }
+    .shimmer:hover::after { transform:translateX(100%); }
+
+    /* ── Horizontal scroll ─────────────────────────── */
+    .hscroll { display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding-bottom:4px; }
+    .hscroll::-webkit-scrollbar { display:none; }
+    .hscroll > * { scroll-snap-align:start;flex-shrink:0; }
+
+    /* ── Dot grid hero bg ──────────────────────────── */
+    .dot-grid { background-image:radial-gradient(circle,rgba(25,82,217,0.12) 1px,transparent 1px);background-size:36px 36px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Announcement ────────────────────────────────────────────── -->
+<div class="bg-ink-8 border-b border-ink-6 text-[12.5px] font-medium py-2 px-4 flex items-center justify-center gap-2.5 text-ink-3">
+  <span class="w-1.5 h-1.5 rounded-full bg-brand-400 live"></span>
+  베타 사전 등록 중 — 얼리버드 혜택 받기
+  <a href="auth.html?signup=student" class="font-semibold text-brand-500 hover:text-brand-600 tc ml-1">지금 신청 →</a>
+</div>
+
+<!-- ── Nav ─────────────────────────────────────────────────────── -->
+<nav id="nav" class="sticky top-0 z-50 bg-white/80 border-b border-ink-6">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="flex items-center justify-between h-16">
+      <a href="index.html" class="font-display text-[22px] text-ink flex items-center">딸깍<span class="text-brand-500">.</span></a>
+      <ul class="hidden md:flex items-center gap-8 list-none">
+        <li><a href="#students" class="text-[13.5px] font-medium text-ink-3 hover:text-ink tc">학생 혜택</a></li>
+        <li><a href="#how-it-works" class="text-[13.5px] font-medium text-ink-3 hover:text-ink tc">이용 방법</a></li>
+        <li><a href="#companies" class="text-[13.5px] font-medium text-ink-3 hover:text-ink tc">기업 채용</a></li>
+        <li><a href="app-student.html" class="text-[13.5px] font-medium text-ink-3 hover:text-ink tc">앱 미리보기</a></li>
+      </ul>
+      <div class="flex items-center gap-2.5">
+        <a href="auth.html" class="hidden sm:flex px-4 py-2 text-[13px] font-semibold text-ink border border-ink-6 rounded-lg hover:border-ink-5 hover:bg-ink-8 tb tbo transition-transform active:scale-[.98]">로그인</a>
+        <a href="auth.html?signup=student" class="shimmer mag px-4 py-2 text-[13px] font-bold text-white bg-brand-500 rounded-lg hover:bg-brand-600 shadow-[0_2px_8px_rgba(25,82,217,0.3)] tb transition-transform active:scale-[.98]">무료 시작하기</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ────────────────────────────────────────────────────── -->
+<section class="relative min-h-[92vh] flex items-center overflow-hidden bg-white" id="hero-section">
+  <!-- Subtle gradient -->
+  <div id="hero-glow" class="absolute rounded-full pointer-events-none" style="width:900px;height:900px;background:radial-gradient(circle,rgba(25,82,217,0.04) 0%,transparent 65%);transform:translate(-50%,-50%);left:50%;top:40%;transition:left 1.2s cubic-bezier(0.16,1,0.3,1),top 1.2s cubic-bezier(0.16,1,0.3,1);"></div>
+
+  <div class="relative z-10 max-w-6xl mx-auto px-6 py-20 w-full">
+    <div class="grid lg:grid-cols-[1fr_420px] gap-16 items-center">
+
+      <!-- Left -->
+      <div>
+        <!-- Eyebrow label -->
+        <div class="word-mask mb-6">
+          <div class="word-inner d0 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand-600 text-[12px] font-bold tracking-wide">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-400 live"></span>
+            저학년 대학생 × 스타트업 인턴십 매칭
+          </div>
+        </div>
+
+        <!-- Headline — each line wrapped for reveal -->
+        <h1 class="font-display leading-[1.05] tracking-[-0.01em] mb-7" style="font-size:clamp(44px,6vw,78px)">
+          <span class="word-mask block"><span class="word-inner d1">지원서 쓰는</span></span>
+          <span class="word-mask block"><span class="word-inner d2">시간 낭비,</span></span>
+          <span class="word-mask block text-brand-500"><span class="word-inner d3">이제 그만.</span></span>
+        </h1>
+
+        <!-- Sub -->
+        <div class="word-mask mb-10">
+          <p class="word-inner d4 text-[16.5px] text-ink-3 leading-[1.8] max-w-[480px]">
+            학교 이메일로 프로필 하나 만들면 끝이에요. 자소서 없이, 관심 가는 스타트업에 버튼 하나로 동시 지원됩니다. 딸깍은 지원서 양식이 아닌, 실제 당신을 봅니다.
+          </p>
+        </div>
+
+        <!-- CTAs -->
+        <div class="word-mask mb-10">
+          <div class="word-inner d5 flex flex-wrap gap-3 items-center">
+            <a href="auth.html?signup=student" class="shimmer mag inline-flex items-center gap-2 px-8 py-4 text-[15px] font-bold text-white bg-brand-500 rounded-xl shadow-[0_4px_16px_rgba(25,82,217,0.35),0_1px_4px_rgba(0,0,0,0.08)] hover:bg-brand-600 active:scale-[.98] transition-transform">
+              학생 — 무료로 시작하기
+              <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 16 16"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a href="auth.html?signup=company" class="mag inline-flex items-center gap-2 px-7 py-4 text-[15px] font-semibold text-ink border border-ink-6 rounded-xl hover:border-ink-5 hover:bg-ink-8 tb tbo active:scale-[.98] transition-transform">
+              기업 채용 상담
+            </a>
+          </div>
+        </div>
+
+        <!-- Trust row -->
+        <div class="word-mask">
+          <div class="word-inner d6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] text-ink-4 font-medium">
+            <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-ok" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>학생 완전 무료</span>
+            <span class="w-px h-3 bg-ink-6"></span>
+            <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 16 16"><rect x="2" y="6" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 6V5a3 3 0 016 0v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>학교 이메일 인증</span>
+            <span class="w-px h-3 bg-ink-6"></span>
+            <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>1~3학년 특화</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Product mock with floating badges -->
+      <div class="relative hidden lg:flex justify-center" id="hero-right">
+        <!-- Badge top right -->
+        <div class="float-a absolute -top-6 -right-4 z-20 flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-ink-6 shadow-[0_4px_16px_rgba(0,0,0,0.1)] text-[12.5px] font-semibold whitespace-nowrap">
+          🎉 <span><strong>32명</strong>이 오늘 지원했어요</span>
+        </div>
+        <!-- Badge bottom left -->
+        <div class="float-b absolute -bottom-4 -left-6 z-20 flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-ink-6 shadow-[0_4px_16px_rgba(0,0,0,0.1)] text-[12.5px] font-semibold whitespace-nowrap">
+          ⚡ 평균 응답 <strong>2.4일</strong>
+        </div>
+
+        <!-- App window -->
+        <div class="w-full bg-white rounded-2xl border border-ink-6 shadow-[0_8px_24px_rgba(0,0,0,0.06),0_32px_72px_rgba(25,82,217,0.1)] overflow-hidden">
+          <div class="flex items-center gap-2 px-4 py-3 bg-ink-8 border-b border-ink-6">
+            <div class="flex gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#FF5F56]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#27C93F]"></span></div>
+            <span class="flex-1 text-center font-mono text-[11px] text-ink-4 tracking-wide">ttalkkak.io — 내 지원함</span>
+          </div>
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-5 pb-5 border-b border-ink-7">
+              <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center font-display text-[18px] text-white shrink-0">김</div>
+              <div>
+                <div class="font-semibold text-[13.5px]">김지원 · 경영학과 2학년</div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[11.5px] text-ink-3">연세대학교</span>
+                  <span class="px-1.5 py-0.5 bg-ok/10 text-ok text-[10px] font-bold rounded-full">✓ 인증됨</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2 mb-4">
+              <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-ink-8 border border-ink-7 hover:border-brand-200 hover:bg-brand-50 tbo tb cursor-default">
+                <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-white border border-ink-6 flex items-center justify-center text-[13px] shrink-0">🚀</div><div><div class="text-[12.5px] font-semibold">마케팅 인턴 (Growth)</div><div class="text-[11px] text-ink-4">토스팀 · 서울 · 주 3일</div></div></div>
+                <span class="px-2 py-0.5 rounded bg-brand-50 text-brand-600 text-[10px] font-bold border border-brand-100">매칭</span>
+              </div>
+              <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-ink-8 border border-ink-7 hover:border-brand-200 hover:bg-brand-50 tbo tb cursor-default">
+                <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-white border border-ink-6 flex items-center justify-center text-[13px] shrink-0">📊</div><div><div class="text-[12.5px] font-semibold">데이터 분석 인턴</div><div class="text-[11px] text-ink-4">당근마켓 · 원격 가능</div></div></div>
+                <span class="px-2 py-0.5 rounded bg-ok/10 text-ok text-[10px] font-bold border border-ok/20">추천</span>
+              </div>
+              <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-ink-8 border border-ink-7 hover:border-brand-200 hover:bg-brand-50 tbo tb cursor-default">
+                <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-white border border-ink-6 flex items-center justify-center text-[13px] shrink-0">🎨</div><div><div class="text-[12.5px] font-semibold">콘텐츠 기획 인턴</div><div class="text-[11px] text-ink-4">오늘의집 · 강남구</div></div></div>
+                <span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[10px] font-bold border border-amber-500/20">신규</span>
+              </div>
+            </div>
+            <a href="auth.html?signup=student" class="shimmer block w-full py-3.5 text-center font-bold text-[14.5px] text-white bg-brand-500 rounded-xl hover:bg-brand-600 shadow-[0_2px_8px_rgba(25,82,217,0.3)] tb active:scale-[.99] transition-transform">
+              🖱️&nbsp; 딸깍 — 3곳에 한 번에 지원하기
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Live Activity Marquee ─────────────────────────────────────── -->
+<div class="bg-ink-8 py-2.5 overflow-hidden border-y border-ink-6">
+  <div class="mar-track gap-0">
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">🎉 <strong class="text-ink-2">이민준</strong>이 토스팀 마케팅 인턴에 합격했어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">📬 <strong class="text-ink-2">오늘의집</strong>에서 3명의 지원서를 검토 중이에요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">⚡ 방금 <strong class="text-ink-2">새 공고 12개</strong>가 올라왔어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">✨ <strong class="text-ink-2">박서연</strong>이 커피챗 후 정식 인턴 제안을 받았어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">🏢 <strong class="text-ink-2">뤼튼</strong>이 3번째 인턴을 딸깍에서 채용했어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">🎓 <strong class="text-ink-2">1학년</strong>도 합격 가능 — 실력이 스펙보다 중요합니다</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">🎉 <strong class="text-ink-2">이민준</strong>이 토스팀 마케팅 인턴에 합격했어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">📬 <strong class="text-ink-2">오늘의집</strong>에서 3명의 지원서를 검토 중이에요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">⚡ 방금 <strong class="text-ink-2">새 공고 12개</strong>가 올라왔어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">✨ <strong class="text-ink-2">박서연</strong>이 커피챗 후 정식 인턴 제안을 받았어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">🏢 <strong class="text-ink-2">뤼튼</strong>이 3번째 인턴을 딸깍에서 채용했어요</span>
+    <span class="inline-flex items-center gap-2 px-6 text-[12.5px] text-ink-4 whitespace-nowrap">🎓 <strong class="text-ink-2">1학년</strong>도 합격 가능 — 실력이 스펙보다 중요합니다</span>
+  </div>
+</div>
+
+<!-- ── Stats ────────────────────────────────────────────────────── -->
+<div class="bg-white border-b border-ink-6">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid grid-cols-2 md:grid-cols-4">
+      <div class="py-10 px-4 text-center border-r border-ink-6 last:border-r-0 md:border-r">
+        <div class="stat-num font-display text-[40px] text-brand-500 leading-none mb-2">2,800+</div>
+        <div class="text-[13px] text-ink-4 font-medium">사전 등록 학생</div>
+      </div>
+      <div class="py-10 px-4 text-center border-r border-ink-6 last:border-r-0 md:border-r">
+        <div class="stat-num font-display text-[40px] text-brand-500 leading-none mb-2">340+</div>
+        <div class="text-[13px] text-ink-4 font-medium">파트너 스타트업</div>
+      </div>
+      <div class="py-10 px-4 text-center border-r border-ink-6 last:border-r-0 border-t md:border-t-0 md:border-r">
+        <div class="stat-num font-display text-[40px] text-brand-500 leading-none mb-2">87%</div>
+        <div class="text-[13px] text-ink-4 font-medium">서류 통과율</div>
+      </div>
+      <div class="py-10 px-4 text-center border-t md:border-t-0">
+        <div class="stat-num font-display text-[40px] text-brand-500 leading-none mb-2">2.4일</div>
+        <div class="text-[13px] text-ink-4 font-medium">평균 기업 응답</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Universities ─────────────────────────────────────────────── -->
+<div class="bg-ink-8 border-b border-ink-6 py-4 overflow-hidden">
+  <p class="text-center text-[11px] font-bold tracking-[0.14em] uppercase text-ink-4 mb-3.5">이미 이 학교 학생들이 사전 등록했어요</p>
+  <div class="mar-track" style="animation-duration:28s">
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 서울대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 연세대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 고려대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 성균관대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 한양대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 중앙대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 이화여자대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 경희대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 건국대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 숙명여자대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-3 whitespace-nowrap gap-1.5">외 40개교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 서울대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 연세대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 고려대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 성균관대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 한양대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">🎓 이화여자대학교 <span class="text-ink-5 ml-2">·</span></span>
+    <span class="inline-flex items-center px-5 text-[13.5px] font-semibold text-ink-2 whitespace-nowrap gap-1.5">외 40개교 <span class="text-ink-5 ml-2">·</span></span>
+  </div>
+</div>
+
+<!-- ── For Students ─────────────────────────────────────────────── -->
+<section id="students" class="py-28 bg-white">
+  <div class="max-w-6xl mx-auto px-6">
+    <!-- Header -->
+    <div class="grid md:grid-cols-2 gap-10 items-end mb-20 up">
+      <div>
+        <p class="text-brand-500 text-[11.5px] font-bold tracking-[0.12em] uppercase mb-4 flex items-center gap-2"><span class="w-5 h-px bg-brand-400"></span>학생을 위한 딸깍</p>
+        <h2 class="font-display leading-[1.12] tracking-tight mb-0" style="font-size:clamp(30px,4vw,52px)">
+          자소서 5시간 쓰다가<br>공고 마감됐을 때,<br><span class="text-brand-500">그 허탈함 이제 없어도 됩니다.</span>
+        </h2>
+      </div>
+      <div>
+        <p class="text-[16px] text-ink-3 leading-[1.8] mb-6">1~3학년은 경험이 없다는 편견, 딸깍이 깨드립니다. 프로필 하나가 모든 지원서를 대신하고, 버튼 하나로 여러 곳에 동시 지원됩니다.</p>
+        <a href="auth.html?signup=student" class="shimmer mag inline-flex items-center gap-2 px-7 py-3.5 text-[14.5px] font-bold text-white bg-brand-500 rounded-xl hover:bg-brand-600 shadow-[0_2px_10px_rgba(25,82,217,0.3)] tb active:scale-[.98] transition-transform">
+          무료로 시작하기 →
+        </a>
+      </div>
+    </div>
+
+    <!-- Bento grid -->
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-4 auto-rows-auto">
+
+      <!-- Big: one-click apply -->
+      <div class="bento col-span-3 md:col-span-4 up bg-brand-50 border border-brand-100 rounded-2xl p-8 overflow-hidden relative min-h-[260px]">
+        <div class="relative z-10">
+          <span class="inline-block mb-4 px-3 py-1 rounded-full bg-brand-500 text-white text-[11px] font-bold tracking-wide">CORE FEATURE</span>
+          <h3 class="font-display text-[26px] text-ink mb-3">딸깍 한 번,<br>여러 곳에 동시 지원</h3>
+          <p class="text-[14px] text-ink-3 leading-[1.65] max-w-[320px]">관심 공고를 모아두고 버튼 하나로 전부 접수. 공고마다 자기소개서를 새로 쓰던 시간이 통째로 사라집니다.</p>
+        </div>
+        <div class="absolute right-6 bottom-6 flex flex-col gap-2 opacity-60">
+          <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-brand-100 text-[11px] font-semibold text-brand-600 whitespace-nowrap shadow-sm">✓ 토스팀 지원 완료</div>
+          <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-brand-100 text-[11px] font-semibold text-brand-600 whitespace-nowrap shadow-sm">✓ 당근마켓 지원 완료</div>
+          <div class="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-brand-100 text-[11px] font-semibold text-brand-600 whitespace-nowrap shadow-sm">✓ 오늘의집 지원 완료</div>
+        </div>
+      </div>
+
+      <!-- Tall: email verification -->
+      <div class="bento col-span-3 md:col-span-2 up bg-ink-8 border border-ink-6 rounded-2xl p-7" style="transition-delay:0.05s">
+        <div class="w-12 h-12 rounded-xl bg-ok/15 border border-ok/25 flex items-center justify-center text-[22px] mb-5">🏫</div>
+        <h3 class="font-display text-[20px] text-ink mb-2">학교 이메일<br>3초 인증</h3>
+        <p class="text-[13.5px] text-ink-3 leading-[1.65]">ac.kr 이메일 하나면 재학생임을 바로 증명. 서류 없이, 기업이 먼저 관심을 보내옵니다.</p>
+      </div>
+
+      <!-- Small: 저학년 -->
+      <div class="bento col-span-3 md:col-span-2 up bg-amber-500/8 border border-amber-500/20 rounded-2xl p-7" style="transition-delay:0.08s">
+        <div class="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center text-[22px] mb-5">🎯</div>
+        <h3 class="font-display text-[20px] text-ink mb-2">저학년도 OK</h3>
+        <p class="text-[13.5px] text-ink-3 leading-[1.65]">1~3학년 전용 포지션만 따로 모아뒀어요. AI가 전공·관심사를 분석해 딱 맞는 곳을 추천합니다.</p>
+      </div>
+
+      <!-- Small: status -->
+      <div class="bento col-span-3 md:col-span-2 up bg-white border border-ink-6 rounded-2xl p-7" style="transition-delay:0.1s">
+        <div class="w-12 h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-[22px] mb-5">📊</div>
+        <h3 class="font-display text-[20px] text-ink mb-2">지원 현황 실시간</h3>
+        <p class="text-[13.5px] text-ink-3 leading-[1.65]">서류 검토 중, 면접 제안, 합격까지 — 상태가 바뀌면 바로 알림이 옵니다.</p>
+      </div>
+
+      <!-- Wide: free -->
+      <div class="bento col-span-3 md:col-span-2 up bg-ink-8 border border-ink-6 rounded-2xl p-7" style="transition-delay:0.12s">
+        <div class="text-[32px] mb-4">🆓</div>
+        <h3 class="font-display text-[20px] text-ink mb-2">학생은 영원히 무료</h3>
+        <p class="text-[13.5px] text-ink-3 leading-[1.65]">수수료 없음. 숨겨진 비용 없음. 기업이 내는 구조로 학생의 기회를 지킵니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ──────────────────────────────────────────────── -->
+<section id="how-it-works" class="py-28 bg-white border-y border-ink-6">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-14 up">
+      <p class="text-brand-500 text-[11.5px] font-bold tracking-[0.12em] uppercase mb-4 flex items-center justify-center gap-2"><span class="w-5 h-px bg-brand-400"></span>이용 방법<span class="w-5 h-px bg-brand-400"></span></p>
+      <h2 class="font-display leading-[1.1] tracking-tight mb-3" style="font-size:clamp(28px,4vw,48px)">정말 간단합니다.</h2>
+      <p class="text-[15.5px] text-ink-3">딸깍 한 번이라는 이름처럼, 과정도 군더더기 없이 만들었어요.</p>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="flex border border-ink-6 rounded-xl w-fit mb-12 overflow-hidden up" id="hiwTabs">
+      <button onclick="switchTab('student')" class="hiw-tab px-7 py-3 text-[14px] font-semibold text-ink-3 bg-white border-r border-ink-6 hover:bg-ink-7 tb tc">🎓 학생이라면</button>
+      <button onclick="switchTab('company')" class="hiw-tab px-7 py-3 text-[14px] font-semibold text-ink-3 bg-white hover:bg-ink-7 tb tc">🏢 기업이라면</button>
+    </div>
+
+    <!-- Student steps -->
+    <div id="panel-student" class="grid md:grid-cols-2 gap-16 items-start">
+      <div>
+        <div class="step-item flex gap-5 mb-0"><div class="w-9 h-9 rounded-xl bg-brand-500 text-white font-bold text-[14px] flex items-center justify-center shrink-0">1</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">학교 이메일로 가입</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">ac.kr 이메일만 있으면 30초 안에 재학생 인증 완료. 서류 제출 없이 신뢰도가 바로 붙습니다.</p></div></div>
+        <div class="step-item flex gap-5 mb-0"><div class="w-9 h-9 rounded-xl bg-brand-500 text-white font-bold text-[14px] flex items-center justify-center shrink-0">2</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">프로필 3분 완성</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">전공, 관심 분야, 가능 요일만 입력. 이게 전부예요. 이 프로필이 자기소개서 역할을 합니다.</p></div></div>
+        <div class="step-item flex gap-5 mb-0"><div class="w-9 h-9 rounded-xl bg-brand-500 text-white font-bold text-[14px] flex items-center justify-center shrink-0">3</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">마음에 드는 공고 담기</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">AI가 추천한 포지션을 살펴보고 마감 전에 담아두세요. 실시간 알림으로 마감일도 챙겨드립니다.</p></div></div>
+        <div class="flex gap-5"><div class="w-9 h-9 rounded-xl bg-brand-500 text-white font-bold text-[14px] flex items-center justify-center shrink-0">4</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">딸깍 — 한 번에 전송 🖱️</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">담아둔 공고를 확인하고 딸깍 버튼. 5곳이든 10곳이든 한 번의 클릭으로 전부 접수됩니다.</p></div></div>
+      </div>
+      <div class="hidden md:block">
+        <div class="bg-white rounded-2xl border border-ink-6 p-7 shadow-[0_2px_10px_rgba(0,0,0,0.05),0_16px_40px_rgba(25,82,217,0.07)]">
+          <div class="flex items-center gap-3 pb-5 mb-5 border-b border-ink-7">
+            <div class="w-12 h-12 rounded-xl bg-brand-500 flex items-center justify-center font-display text-[20px] text-white shrink-0">박</div>
+            <div><div class="font-bold text-[15px]">박서연</div><div class="flex items-center gap-1.5 mt-0.5 text-[12px] text-ink-3">고려대학교 경영학과 2학년 <span class="px-1.5 py-0.5 bg-ok/10 text-ok text-[10px] font-bold rounded-full">✓ 인증됨</span></div></div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            <span class="px-2.5 py-1 rounded-lg bg-ink-8 border border-ink-6 text-[12px] font-medium text-ink-2">마케팅</span>
+            <span class="px-2.5 py-1 rounded-lg bg-ink-8 border border-ink-6 text-[12px] font-medium text-ink-2">엑셀/구글시트</span>
+            <span class="px-2.5 py-1 rounded-lg bg-ink-8 border border-ink-6 text-[12px] font-medium text-ink-2">SNS 운영</span>
+            <span class="px-2.5 py-1 rounded-lg bg-ink-8 border border-ink-6 text-[12px] font-medium text-ink-2">주 3일 가능</span>
+          </div>
+          <div class="flex items-center justify-between px-4 py-3.5 rounded-xl bg-ink-8 border border-ink-7 mb-4">
+            <span class="text-[12.5px] text-ink-3 font-medium">관심 공고</span>
+            <span class="font-display text-[24px] text-brand-500">6곳 담김</span>
+          </div>
+          <a href="auth.html?signup=student" class="shimmer block w-full py-3.5 text-center font-bold text-[14px] text-white bg-brand-500 rounded-xl hover:bg-brand-600 tb active:scale-[.99] transition-transform shadow-[0_2px_8px_rgba(25,82,217,0.3)]">🖱️&nbsp; 딸깍 — 6곳에 한 번에 지원</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Company steps -->
+    <div id="panel-company" class="hidden grid md:grid-cols-2 gap-16 items-start">
+      <div>
+        <div class="step-item flex gap-5 mb-0"><div class="w-9 h-9 rounded-xl bg-ink text-white font-bold text-[14px] flex items-center justify-center shrink-0">1</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">기업 계정 생성 (5분)</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">사업자번호와 담당자 정보만 입력하면 당일 승인. 다음 날부터 인재 풀에 접근합니다.</p></div></div>
+        <div class="step-item flex gap-5 mb-0"><div class="w-9 h-9 rounded-xl bg-ink text-white font-bold text-[14px] flex items-center justify-center shrink-0">2</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">포지션 등록</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">업무 내용과 희망 역량을 입력하면 딸깍이 자동으로 적합한 지원자를 필터링해 보여줍니다.</p></div></div>
+        <div class="step-item flex gap-5 mb-0"><div class="w-9 h-9 rounded-xl bg-ink text-white font-bold text-[14px] flex items-center justify-center shrink-0">3</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">검증된 지원자만 확인</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">학교 이메일 인증을 통과한 재학생만 지원 가능. 유령 계정 없이 진짜 학생만 만납니다.</p></div></div>
+        <div class="flex gap-5"><div class="w-9 h-9 rounded-xl bg-ink text-white font-bold text-[14px] flex items-center justify-center shrink-0">4</div><div class="pt-1"><h3 class="font-bold text-[16px] mb-1.5">채팅으로 바로 연락</h3><p class="text-[13.5px] text-ink-3 leading-[1.65]">마음에 드는 지원자에게 플랫폼 내 메시지로 즉시 연락. 커피챗부터 면접까지 한 곳에서.</p></div></div>
+      </div>
+      <div class="hidden md:block">
+        <div class="bg-white rounded-2xl border border-ink-6 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.05),0_16px_40px_rgba(25,82,217,0.07)]">
+          <div class="font-mono text-[11px] tracking-widest uppercase text-ink-4 mb-4 pb-4 border-b border-ink-7">마케팅 인턴 지원자 · 12명</div>
+          <div class="flex flex-col gap-2.5 mb-4">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-ink-8 border border-ink-7"><div class="w-9 h-9 rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center text-[14px] shrink-0">🎓</div><div class="flex-1"><div class="font-semibold text-[13px]">이민준 · 경영 3학년</div><div class="text-[11.5px] text-ink-4">한양대 · SNS운영, 데이터분석</div></div><span class="font-display text-[18px] text-brand-500">98</span><span class="text-ok font-bold text-sm">✓</span></div>
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-ink-8 border border-ink-7"><div class="w-9 h-9 rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center text-[14px] shrink-0">🎓</div><div class="flex-1"><div class="font-semibold text-[13px]">김하늘 · 광고홍보 2학년</div><div class="text-[11.5px] text-ink-4">성균관대 · 콘텐츠, 영상편집</div></div><span class="font-display text-[18px] text-brand-500">94</span><span class="text-ok font-bold text-sm">✓</span></div>
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-ink-8 border border-ink-7"><div class="w-9 h-9 rounded-lg bg-brand-50 border border-brand-100 flex items-center justify-center text-[14px] shrink-0">🎓</div><div class="flex-1"><div class="font-semibold text-[13px]">박지호 · 통계학 2학년</div><div class="text-[11.5px] text-ink-4">고려대 · 엑셀, Analytics</div></div><span class="font-display text-[18px] text-brand-500">91</span><span class="text-ok font-bold text-sm">✓</span></div>
+          </div>
+          <div class="flex items-center justify-center gap-2 py-3 rounded-xl bg-ok/10 border border-ok/20 text-[12.5px] font-semibold text-ok">🔒 모든 지원자 학교 이메일 인증 완료</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── For Companies ─────────────────────────────────────────────── -->
+<section id="companies" class="py-28 bg-ink-8 border-y border-ink-6">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid lg:grid-cols-2 gap-20 items-start">
+      <div class="up">
+        <p class="text-brand-500 text-[11.5px] font-bold tracking-[0.12em] uppercase mb-5 flex items-center gap-2"><span class="w-5 h-px bg-brand-400"></span>기업을 위한 딸깍</p>
+        <h2 class="font-display leading-[1.1] tracking-tight text-ink mb-6" style="font-size:clamp(28px,4vw,52px)">
+          창업자가 채용에<br>쓰는 시간, 평균<br><span class="text-brand-500">주 15시간입니다.</span>
+        </h2>
+        <p class="text-[16px] text-ink-3 leading-[1.8] mb-10">그 시간을 돌려드립니다. 딸깍은 학교 이메일로 인증된 저학년 인재만 연결해요. 허수 없이, 빠르게.</p>
+        <div class="flex flex-col divide-y divide-ink-6">
+          <div class="flex gap-4 py-5 rounded-xl px-3 hover:bg-white tb cursor-default">
+            <div class="w-10 h-10 rounded-xl bg-ink-7 border border-ink-6 flex items-center justify-center text-[18px] shrink-0">✅</div>
+            <div><div class="font-bold text-[15px] text-ink mb-1">학교 이메일 인증 — 가짜 지원자 없음</div><div class="text-[13.5px] text-ink-3 leading-[1.6]">ac.kr 이메일로 검증된 재학생만. 유령 계정, 허위 이력 없는 진짜 지원자만 만납니다.</div></div>
+          </div>
+          <div class="flex gap-4 py-5 rounded-xl px-3 hover:bg-white tb cursor-default">
+            <div class="w-10 h-10 rounded-xl bg-ink-7 border border-ink-6 flex items-center justify-center text-[18px] shrink-0">🎯</div>
+            <div><div class="font-bold text-[15px] text-ink mb-1">저학년 특화 — 배우려는 의지가 가장 높은 시기</div><div class="text-[13.5px] text-ink-3 leading-[1.6]">1~3학년은 기업 문화를 함께 만들 수 있어요. 빠르게 성장하고 오래 함께할 인재입니다.</div></div>
+          </div>
+          <div class="flex gap-4 py-5 rounded-xl px-3 hover:bg-white tb cursor-default">
+            <div class="w-10 h-10 rounded-xl bg-ink-7 border border-ink-6 flex items-center justify-center text-[18px] shrink-0">⚡</div>
+            <div><div class="font-bold text-[15px] text-ink mb-1">등록 당일부터 지원서 수신</div><div class="text-[13.5px] text-ink-3 leading-[1.6]">공고 등록 후 평균 2.4일 내 첫 지원자. 기존 플랫폼 대비 2배 빠른 매칭 속도입니다.</div></div>
+          </div>
+          <div class="flex gap-4 py-5 rounded-xl px-3 hover:bg-white tb cursor-default">
+            <div class="w-10 h-10 rounded-xl bg-ink-7 border border-ink-6 flex items-center justify-center text-[18px] shrink-0">💰</div>
+            <div><div class="font-bold text-[15px] text-ink mb-1">채용 수수료 없는 투명한 구독제</div><div class="text-[13.5px] text-ink-3 leading-[1.6]">몇 명을 뽑든 추가 비용 없음. 예측 가능한 고정 요금으로 채용을 계획할 수 있습니다.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="up" style="transition-delay:0.1s">
+        <div class="bg-white border border-ink-6 rounded-2xl p-8 mb-5 shadow-[0_1px_4px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)]">
+          <div class="text-[44px] text-brand-500 font-display leading-none mb-3">"</div>
+          <p class="text-[16.5px] leading-[1.8] text-ink-2 italic mb-7">딸깍 통해서 마케팅 인턴 뽑았는데, 지원자 전원이 실제 재학생이고 이력서도 충실했어요. 면접까지 일주일도 안 걸렸어요. 처음엔 진짜인가 싶었는데...</p>
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-brand-500 flex items-center justify-center font-display text-[18px] text-white shrink-0">이</div>
+            <div><div class="font-semibold text-[14.5px] text-ink">이준혁 대표</div><div class="text-[12.5px] text-ink-4">생성형 AI 스타트업 · 뤼튼 테크놀로지스</div></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 border border-ink-6 rounded-2xl overflow-hidden mb-6 bg-white">
+          <div class="py-6 text-center border-r border-ink-6"><div class="font-display text-[30px] text-brand-500 leading-none mb-1">7일</div><div class="text-[11.5px] text-ink-4 font-medium">채용 소요</div></div>
+          <div class="py-6 text-center border-r border-ink-6"><div class="font-display text-[30px] text-brand-500 leading-none mb-1">100%</div><div class="text-[11.5px] text-ink-4 font-medium">인증 지원자</div></div>
+          <div class="py-6 text-center"><div class="font-display text-[30px] text-brand-500 leading-none mb-1">3×</div><div class="text-[11.5px] text-ink-4 font-medium">시간 절약</div></div>
+        </div>
+        <a href="auth.html?signup=company" class="shimmer block w-full py-4 text-center font-bold text-[15px] text-white bg-brand-500 rounded-xl hover:bg-brand-600 tb active:scale-[.99] transition-transform shadow-[0_2px_8px_rgba(25,82,217,0.2)]">기업 채용 문의하기 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Partner logos ─────────────────────────────────────────────── -->
+<div class="py-14 border-b border-ink-6 bg-white">
+  <div class="max-w-6xl mx-auto px-6">
+    <p class="text-center text-[11px] font-bold tracking-[0.14em] uppercase text-ink-4 mb-8">딸깍으로 채용 중인 스타트업</p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">🤖 뤼튼</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">💰 핀다</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">📚 클래스101</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">💼 원티드랩</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">👗 무신사</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">🏠 직방</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">💳 뱅크샐러드</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-2 hover:border-brand-200 hover:text-brand-600 hover:bg-brand-50 tbo tc tb cursor-default">✈️ 마이리얼트립</div>
+      <div class="px-5 py-2.5 rounded-xl bg-ink-8 border border-ink-6 text-[13.5px] font-semibold text-ink-3 cursor-default">+ 330개 기업</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Testimonials ──────────────────────────────────────────────── -->
+<section class="py-28 bg-white border-b border-ink-6">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-14 up">
+      <p class="text-brand-500 text-[11.5px] font-bold tracking-[0.12em] uppercase mb-4 flex items-center justify-center gap-2"><span class="w-5 h-px bg-brand-400"></span>실제 후기<span class="w-5 h-px bg-brand-400"></span></p>
+      <h2 class="font-display leading-[1.1] tracking-tight mb-3" style="font-size:clamp(28px,4vw,44px)">딸깍으로 바뀐 이야기들</h2>
+      <p class="text-[15.5px] text-ink-3">베타 테스트에 참여한 학생들의 진짜 경험을 들어보세요.</p>
+    </div>
+    <div class="grid sm:grid-cols-3 gap-5">
+      <div class="bento up bg-white border border-ink-6 rounded-2xl p-7 shadow-[0_1px_4px_rgba(0,0,0,0.04),0_8px_24px_rgba(25,82,217,0.06)]" style="transition-delay:0.04s">
+        <div class="text-yellow-400 text-sm tracking-widest mb-4">★★★★★</div>
+        <p class="text-[14.5px] text-ink-2 leading-[1.8] italic mb-6">"2학년인데 지원해도 되나 망설였는데, 딸깍에는 저학년 환영 공고가 따로 있더라고요. 첫 지원에서 커피챗까지 이어졌어요."</p>
+        <div class="border-t border-ink-7 pt-5 flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-[15px] shrink-0">😊</div><div><div class="font-bold text-[13.5px]">최유진</div><div class="text-[12px] text-ink-4">경영학과 2학년</div></div><span class="ml-auto px-2 py-0.5 rounded bg-brand-50 text-brand-600 text-[10.5px] font-bold border border-brand-100">마케팅 인턴 합격</span></div>
+      </div>
+      <div class="bento up bg-white border border-ink-6 rounded-2xl p-7 shadow-[0_1px_4px_rgba(0,0,0,0.04),0_8px_24px_rgba(25,82,217,0.06)]" style="transition-delay:0.08s">
+        <div class="text-yellow-400 text-sm tracking-widest mb-4">★★★★★</div>
+        <p class="text-[14.5px] text-ink-2 leading-[1.8] italic mb-6">"자소서 쓰기 싫어서 인턴을 계속 미뤘는데, 딸깍은 프로필이 자소서 대신이라서 진짜 딸깍 한 번으로 끝났어요."</p>
+        <div class="border-t border-ink-7 pt-5 flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-ok/10 border border-ok/20 flex items-center justify-center text-[15px] shrink-0">🙋</div><div><div class="font-bold text-[13.5px]">김동현</div><div class="text-[12px] text-ink-4">컴공과 3학년 · 지방 대학</div></div><span class="ml-auto px-2 py-0.5 rounded bg-ok/10 text-ok text-[10.5px] font-bold border border-ok/20">개발 인턴 합격</span></div>
+      </div>
+      <div class="bento up bg-white border border-ink-6 rounded-2xl p-7 shadow-[0_1px_4px_rgba(0,0,0,0.04),0_8px_24px_rgba(25,82,217,0.06)]" style="transition-delay:0.12s">
+        <div class="text-yellow-400 text-sm tracking-widest mb-4">★★★★★</div>
+        <p class="text-[14.5px] text-ink-2 leading-[1.8] italic mb-6">"지방 대학이라 서울 스타트업 지원이 막막했는데, 딸깍은 원격 공고를 따로 필터링해줘서 학교 다니면서도 실무 쌓을 수 있었어요."</p>
+        <div class="border-t border-ink-7 pt-5 flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[15px] shrink-0">🌱</div><div><div class="font-bold text-[13.5px]">이수빈</div><div class="text-[12px] text-ink-4">미디어학과 1학년 · 국립대</div></div><span class="ml-auto px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 text-[10.5px] font-bold border border-amber-500/20">콘텐츠 인턴 합격</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Final CTA ─────────────────────────────────────────────────── -->
+<div class="grid md:grid-cols-2 min-h-[440px] border-y border-ink-6">
+  <div class="flex flex-col justify-center p-12 lg:p-20 bg-white border-r border-ink-6 up">
+    <div class="text-brand-500 text-[11px] font-bold tracking-[0.12em] uppercase mb-5">대학생이라면</div>
+    <h3 class="font-display leading-[1.12] tracking-tight text-ink mb-5" style="font-size:clamp(24px,3.5vw,40px)">학교 이메일로<br>30초 가입,<br>딸깍 한 번으로 지원.</h3>
+    <p class="text-[14.5px] text-ink-3 leading-[1.75] mb-8">서류 없이, 수수료 없이. 실력이 스펙보다 중요한 곳에서 시작하세요.</p>
+    <a href="auth.html?signup=student" class="shimmer mag inline-flex items-center gap-2 px-8 py-4 text-[15px] font-bold text-white bg-brand-500 rounded-xl shadow-[0_4px_14px_rgba(25,82,217,0.2)] hover:bg-brand-600 tb active:scale-[.98] transition-transform w-fit">무료로 사전 등록하기 →</a>
+    <p class="text-[12px] text-ink-4 mt-4">학생은 영원히 무료 · 수수료 없음</p>
+  </div>
+  <div class="flex flex-col justify-center p-12 lg:p-20 bg-ink-8 up" style="transition-delay:0.1s">
+    <div class="text-brand-500 text-[11px] font-bold tracking-[0.12em] uppercase mb-5">스타트업·중소기업이라면</div>
+    <h3 class="font-display leading-[1.12] tracking-tight text-ink mb-5" style="font-size:clamp(24px,3.5vw,40px)">검증된 저학년<br>인재 풀에 지금<br>바로 접근.</h3>
+    <p class="text-[14.5px] text-ink-3 leading-[1.75] mb-8">학교 이메일 인증 완료 지원자만. 평균 2.4일 내 첫 지원서.</p>
+    <a href="auth.html?signup=company" class="shimmer mag inline-flex items-center gap-2 px-8 py-4 text-[15px] font-bold text-white bg-brand-500 rounded-xl hover:bg-brand-600 tb active:scale-[.98] transition-transform w-fit">기업 채용 문의하기 →</a>
+    <p class="text-[12px] text-ink-4 mt-4">첫 포지션 2주 무료 체험</p>
+  </div>
+</div>
+
+<!-- ── Footer ────────────────────────────────────────────────────── -->
+<footer class="bg-ink text-white pt-16 pb-8 border-t border-white/10">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+      <div class="lg:col-span-1">
+        <div class="font-display text-[22px] mb-3 flex items-baseline">딸깍<span class="text-brand-400">.</span></div>
+        <p class="text-[13.5px] text-white/40 leading-[1.75] max-w-[200px]">대학생과 스타트업을 연결하는 인턴십 매칭 플랫폼</p>
+      </div>
+      <div><h4 class="text-[11px] font-bold tracking-[0.12em] uppercase text-white/35 mb-4">학생</h4><ul class="flex flex-col gap-3 list-none"><li><a href="app-student.html" class="text-[13.5px] text-white/45 hover:text-white/85 tc">인턴십 찾기</a></li><li><a href="auth.html?signup=student" class="text-[13.5px] text-white/45 hover:text-white/85 tc">프로필 만들기</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">합격 가이드</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">커피챗</a></li></ul></div>
+      <div><h4 class="text-[11px] font-bold tracking-[0.12em] uppercase text-white/35 mb-4">기업</h4><ul class="flex flex-col gap-3 list-none"><li><a href="app-company.html" class="text-[13.5px] text-white/45 hover:text-white/85 tc">인턴 채용하기</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">요금제</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">성공 사례</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">채용 가이드</a></li></ul></div>
+      <div><h4 class="text-[11px] font-bold tracking-[0.12em] uppercase text-white/35 mb-4">회사</h4><ul class="flex flex-col gap-3 list-none"><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">소개</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">블로그</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">이용약관</a></li><li><a href="#" class="text-[13.5px] text-white/45 hover:text-white/85 tc">개인정보처리방침</a></li></ul></div>
+    </div>
+    <div class="border-t border-white/10 pt-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <span class="font-mono text-[11.5px] text-white/25">© 2026 딸깍. All rights reserved. · 사업자등록번호: 000-00-00000</span>
+      <div class="flex gap-2.5"><a href="#" class="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-[13px] hover:border-white/25 hover:bg-white/8 tbo tb">💬</a><a href="#" class="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-[13px] hover:border-white/25 hover:bg-white/8 tbo tb">📸</a><a href="#" class="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-[13px] hover:border-white/25 hover:bg-white/8 tbo tb">💼</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.addEventListener('mousemove',e=>{
+  const hero=document.getElementById('hero-glow');
+  if(hero){ hero.style.left=(e.clientX/window.innerWidth*100)+'%'; hero.style.top=(e.clientY/window.innerHeight*100)+'%'; }
+});
+
+/* ── Nav scroll ────────────────────────── */
+window.addEventListener('scroll',()=>{ document.getElementById('nav').classList.toggle('scrolled',scrollY>8); },{passive:true});
+
+/* ── Scroll reveal ─────────────────────── */
+const upEls=document.querySelectorAll('.up');
+const upObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');upObs.unobserve(e.target);}});},{threshold:0.08});
+upEls.forEach(el=>{
+  el.style.transition='opacity 0.65s cubic-bezier(0.16,1,0.3,1),transform 0.65s cubic-bezier(0.16,1,0.3,1)';
+  el.style.opacity='0'; el.style.transform='translateY(28px)';
+  upObs.observe(el);
+});
+document.addEventListener('DOMContentLoaded',()=>{upEls.forEach(el=>{el.classList.add('show');});});
+
+/* ── Counter scramble ──────────────────── */
+const chars='0123456789';
+function scramble(el,target,suffix=''){
+  const dur=1800,start=performance.now();
+  const isDecimal=target%1!==0;
+  function tick(now){
+    const p=Math.min((now-start)/dur,1);
+    const eased=1-Math.pow(1-p,3);
+    if(p<0.85){
+      const noise=chars[Math.floor(Math.random()*chars.length)];
+      el.textContent=noise+(isDecimal?'.'+chars[Math.floor(Math.random()*chars.length)]:'')+'+'+(suffix||'');
+    } else {
+      const val=target*eased;
+      el.textContent=(isDecimal?val.toFixed(1):Math.floor(val).toLocaleString())+(suffix||'');
+    }
+    if(p<1) requestAnimationFrame(tick); else el.classList.add('counter-done');
+  }
+  requestAnimationFrame(tick);
+}
+const cObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const t=parseFloat(e.target.dataset.t),s=e.target.dataset.s||'';
+      scramble(e.target,t,s); cObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.7});
+document.querySelectorAll('.stat-num').forEach((el,i)=>{
+  const configs=[{t:2800,s:'+'},{t:340,s:'+'},{t:87,s:'%'},{t:2.4,s:'일'}];
+  if(configs[i]){el.dataset.t=configs[i].t;el.dataset.s=configs[i].s;el.textContent='0'+configs[i].s;cObs.observe(el);}
+});
+
+/* ── HIW tabs ──────────────────────────── */
+let activeTab='student';
+function switchTab(type){
+  activeTab=type;
+  document.querySelectorAll('.hiw-tab').forEach((t,i)=>{
+    const on=(i===0&&type==='student')||(i===1&&type==='company');
+    t.style.background=on?'#1952D9':'';
+    t.style.color=on?'#fff':'';
+  });
+  document.getElementById('panel-student').style.display=type==='student'?'grid':'none';
+  document.getElementById('panel-company').style.display=type==='company'?'grid':'none';
+}
+/* init active state */
+document.querySelectorAll('.hiw-tab')[0].style.background='#1952D9';
+document.querySelectorAll('.hiw-tab')[0].style.color='#fff';
+
+/* ── Bento card 3D tilt ────────────────── */
+document.querySelectorAll('.bento').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-0.5;
+    const y=(e.clientY-r.top)/r.height-0.5;
+    card.style.transform=`perspective(600px) rotateX(${-y*6}deg) rotateY(${x*6}deg) translateZ(6px)`;
+  });
+  card.addEventListener('mouseleave',()=>{ card.style.transform=''; });
+});
+
+/* ── Magnetic buttons ──────────────────── */
+document.querySelectorAll('.mag').forEach(btn=>{
+  btn.addEventListener('mousemove',e=>{
+    const r=btn.getBoundingClientRect();
+    const x=(e.clientX-r.left-r.width/2)*0.18;
+    const y=(e.clientY-r.top-r.height/2)*0.18;
+    btn.style.transform=`translate(${x}px,${y}px)`;
+  });
+  btn.addEventListener('mouseleave',()=>{ btn.style.transform=''; });
+});
+
+/* ── Cursor scale on interactive ──────── */
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ dot.style.transform='translate(-50%,-50%) scale(0)'; });
+  el.addEventListener('mouseleave',()=>{ dot.style.transform='translate(-50%,-50%) scale(1)'; });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>딸깍 — 기업 대시보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#EEF3FF',100:'#D9E5FF',200:'#B3CBFF',400:'#4880FF',500:'#1952D9',600:'#1441B5',700:'#0F318F' },
+            amber:  { 500:'#F5621A',600:'#D9500F' },
+            ink:    { DEFAULT:'#0C0B09',2:'#2D2C2A',3:'#6B6A68',4:'#9C9B99',5:'#C8C7C5',6:'#E5E4E1',7:'#F2F1EE',8:'#F9F8F6' },
+            ok:     { DEFAULT:'#059669', light:'#DCFCE7' },
+          },
+          fontFamily: {
+            display: ['"Black Han Sans"','sans-serif'],
+            body:    ['"DM Sans"','system-ui','sans-serif'],
+            mono:    ['"DM Mono"','monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <script src="/db.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: #FAFAF8; color: #0C0B09; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    /* Sidebar */
+    #sidebar { width:240px;flex-shrink:0;background:#fff;border-right:1px solid #EBEBEA;display:flex;flex-direction:column;height:100vh;position:sticky;top:0; }
+    .nav-item { display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:400;color:#6B6A68;cursor:pointer;transition:background 0.12s,color 0.12s;margin:1px 10px; }
+    .nav-item:hover { background:#F5F4F1;color:#0C0B09; }
+    .nav-item.active { background:#F0EFEC;color:#0C0B09;font-weight:500; }
+    .nav-section { padding:16px 16px 6px;font-size:11px;font-weight:600;color:#9C9B99;letter-spacing:0.08em;text-transform:uppercase; }
+
+    /* Cards */
+    .card { background:#fff;border:1px solid #EBEBEA;border-radius:14px;padding:20px; }
+
+    /* Badge */
+    .badge { display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;font-family:'DM Mono',monospace; }
+    .badge-blue  { background:#EEF3FF;color:#1952D9; }
+    .badge-green { background:#DCFCE7;color:#059669; }
+    .badge-amber { background:#FFF7ED;color:#F5621A; }
+    .badge-gray  { background:#F2F1EE;color:#6B6A68; }
+    .badge-ink   { background:#0C0B09;color:#fff; }
+    .badge-red   { background:#FEF2F2;color:#EF4444; }
+
+    /* Primary button */
+    .btn-primary { padding:10px 18px;border-radius:10px;background:#1952D9;color:#fff;font-size:13.5px;font-weight:600;border:none;cursor:pointer;position:relative;overflow:hidden;transition:background 0.15s,box-shadow 0.15s;box-shadow:0 2px 8px rgba(25,82,217,0.25); }
+    .btn-primary:hover { background:#1441B5;box-shadow:0 4px 16px rgba(25,82,217,0.35); }
+    .btn-primary::after { content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.15) 50%,transparent 65%);transform:translateX(-100%);transition:transform 0.5s ease; }
+    .btn-primary:hover::after { transform:translateX(100%); }
+
+    /* Candidate card */
+    .cand-card { background:#fff;border:1px solid #E5E4E1;border-radius:12px;padding:16px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s; }
+    .cand-card:hover { border-color:#B3CBFF;box-shadow:0 4px 20px rgba(25,82,217,0.07); }
+    .cand-card.shortlisted { border-left:3px solid #1952D9; }
+    .cand-card.interviewed { border-left:3px solid #059669; }
+
+    /* Score bar */
+    .score-bar { height:4px;border-radius:2px;background:#E5E4E1;overflow:hidden; }
+    .score-fill { height:100%;border-radius:2px;background:#1952D9;transition:width 0.8s cubic-bezier(0.16,1,0.3,1); }
+
+    /* Kanban column */
+    .kanban-col { flex:1;min-width:200px; }
+    .kanban-header { padding:10px 12px;border-radius:10px 10px 0 0;font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px; }
+
+    /* Input */
+    .field-label { display:block;font-size:12.5px;font-weight:600;color:#6B6A68;margin-bottom:5px;letter-spacing:0.03em;text-transform:uppercase; }
+    .field-input { width:100%;padding:10px 13px;border:1.5px solid #E5E4E1;border-radius:9px;font-size:13.5px;font-family:'DM Sans',system-ui;background:#fff;color:#0C0B09;outline:none;transition:border-color 0.15s,box-shadow 0.15s; }
+    .field-input:focus { border-color:#1952D9;box-shadow:0 0 0 3px rgba(25,82,217,0.08); }
+    .field-input::placeholder { color:#9C9B99; }
+    textarea.field-input { resize:vertical;min-height:80px; }
+
+    /* Stat card */
+    .stat-card { background:#fff;border:1px solid #E5E4E1;border-radius:14px;padding:18px 20px;position:relative;overflow:hidden; }
+    .stat-card::before { content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;opacity:0.06; }
+    .stat-card.blue::before { background:#1952D9; }
+    .stat-card.orange::before { background:#F5621A; }
+    .stat-card.green::before { background:#059669; }
+    .stat-card.purple::before { background:#7C3AED; }
+
+    /* Fade in */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .fu { animation:fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+    .fu1{animation-delay:0.05s}.fu2{animation-delay:0.1s}.fu3{animation-delay:0.15s}.fu4{animation-delay:0.2s}.fu5{animation-delay:0.25s}
+
+    /* Live dot */
+    @keyframes ping { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.7);opacity:0.5} }
+    .live { animation:ping 2s ease-in-out infinite; }
+
+    /* Toast */
+    #toast { position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);opacity:0;background:#0C0B09;color:#fff;padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:500;z-index:999;transition:opacity 0.25s,transform 0.25s;pointer-events:none;white-space:nowrap; }
+    #toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+
+    /* Modal */
+    #post-modal { position:fixed;inset:0;background:rgba(12,11,9,0.5);z-index:100;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s; }
+    #post-modal.open { opacity:1;pointer-events:auto; }
+    .modal-box { background:#fff;border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:scale(0.95);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+    #post-modal.open .modal-box { transform:scale(1); }
+
+    /* Cand detail panel */
+    #cand-panel { position:fixed;top:0;right:0;width:400px;height:100vh;background:#fff;border-left:1px solid #E5E4E1;z-index:50;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.16,1,0.3,1);overflow-y:auto; }
+    #cand-panel.open { transform:translateX(0); }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#C8C7C5;border-radius:3px; }
+    button:focus-visible { outline:2px solid #1952D9;outline-offset:3px;border-radius:6px; }
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- ── Candidate Detail Panel ─────────────────────────────────── -->
+<div id="cand-panel">
+  <div class="p-6 border-b border-ink-6 flex items-center justify-between sticky top-0 bg-white z-10">
+    <h3 class="font-semibold text-[15px] text-ink">지원자 상세</h3>
+    <button onclick="closeCandPanel()" class="w-8 h-8 rounded-lg hover:bg-ink-8 flex items-center justify-center text-ink-4 hover:text-ink" style="transition:background 0.12s">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="p-6 space-y-5" id="cand-panel-body"></div>
+</div>
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div class="px-5 py-5 border-b border-ink-6">
+      <a href="index.html" class="font-display text-[20px] text-ink">딸깍<span class="text-brand-500">.</span></a>
+      <div class="text-[11px] text-ink-4 mt-0.5 font-mono">기업 어드민</div>
+    </div>
+
+    <div class="px-4 py-4 border-b border-ink-6">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" id="co-sb-avatar" style="background:#7C3AED">W</div>
+        <div class="min-w-0">
+          <div class="font-semibold text-[13.5px] text-ink truncate" id="co-sb-name">뤼튼 테크놀로지스</div>
+          <div class="text-[11.5px] text-ink-4 truncate">채용 담당자</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-2">
+      <div class="nav-section">채용 관리</div>
+      <div class="nav-item active" onclick="showView('overview')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        대시보드
+      </div>
+      <div class="nav-item" onclick="showView('candidates')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        지원자 관리
+        <span class="ml-auto text-[11px] font-mono bg-brand-500 text-white rounded-full w-5 h-5 flex items-center justify-center">7</span>
+      </div>
+      <div class="nav-item" onclick="showView('positions')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0 1 12 15c-3.183 0-6.22-.62-9-1.745M16 6l-4-4-4 4m4-4v14"/></svg>
+        공고 관리
+      </div>
+      <div class="nav-section mt-2">설정</div>
+      <div class="nav-item" onclick="showView('company')">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        회사 프로필
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        알림 설정
+      </div>
+    </nav>
+
+    <div class="p-4 border-t border-ink-6">
+      <div class="nav-item" onclick="DB.auth.clearSession();window.location.href='auth.html'">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        로그아웃
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────────────────── -->
+  <main class="flex-1 overflow-y-auto">
+
+    <!-- ── VIEW: Overview ──────────────────────────────────────── -->
+    <div id="view-overview">
+      <div class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+
+        <!-- Header -->
+        <div class="fu fu1 flex items-center justify-between">
+          <div>
+            <h1 class="font-bold text-[22px] text-ink" id="co-greeting">안녕하세요, 뤼튼 👋</h1>
+            <p class="text-ink-3 text-sm mt-1">오늘 새로운 지원자 <span class="text-brand-500 font-semibold">2명</span>이 도착했어요.</p>
+          </div>
+          <button class="btn-primary flex items-center gap-2" onclick="openPostModal()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            공고 등록
+          </button>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-4 gap-4 fu fu2">
+          <div class="stat-card blue">
+            <div class="text-[11.5px] font-medium text-ink-3 mb-2">이번 주 지원자</div>
+            <div class="font-display text-[32px] text-ink leading-none">7</div>
+            <div class="text-[12px] text-ok mt-1">↑ 지난 주 대비 +3</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="text-[11.5px] font-medium text-ink-3 mb-2">평균 매칭 점수</div>
+            <div class="font-display text-[32px] text-ink leading-none">74<span class="text-lg text-ink-3">%</span></div>
+            <div class="text-[12px] text-ink-4 mt-1">학교 인증 100%</div>
+          </div>
+          <div class="stat-card green">
+            <div class="text-[11.5px] font-medium text-ink-3 mb-2">활성 공고</div>
+            <div class="font-display text-[32px] text-ink leading-none">2</div>
+            <div class="text-[12px] text-ink-4 mt-1">마감까지 최대 18일</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="text-[11.5px] font-medium text-ink-3 mb-2">평균 응답 시간</div>
+            <div class="font-display text-[32px] text-ink leading-none">2.4<span class="text-lg text-ink-3">일</span></div>
+            <div class="text-[12px] text-ok mt-1">상위 15%</div>
+          </div>
+        </div>
+
+        <!-- Recent applicants + Active positions -->
+        <div class="grid grid-cols-5 gap-6 fu fu3">
+          <!-- Recent applicants (3 cols) -->
+          <div class="col-span-3 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="font-semibold text-[15px] text-ink">최근 지원자</h2>
+              <button class="text-[12.5px] text-brand-500 font-medium" onclick="showView('candidates')">전체 보기 →</button>
+            </div>
+            <div class="space-y-2.5" id="recent-cands"></div>
+          </div>
+
+          <!-- Active positions (2 cols) -->
+          <div class="col-span-2 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="font-semibold text-[15px] text-ink">활성 공고</h2>
+              <button class="text-[12.5px] text-brand-500 font-medium" onclick="showView('positions')">관리 →</button>
+            </div>
+            <div class="space-y-3" id="active-positions"></div>
+
+            <!-- Quick tip -->
+            <div class="bg-amber-500/8 border border-amber-500/15 rounded-xl p-4 mt-2" style="background:rgba(245,98,26,0.06)">
+              <p class="text-[12.5px] font-semibold text-amber-600">💡 팁</p>
+              <p class="text-[12px] text-ink-3 mt-1">지원자에게 24시간 내 응답하면 수락률이 <strong>2.4배</strong> 높아집니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: Candidates ─────────────────────────────────────── -->
+    <div id="view-candidates" class="hidden">
+      <div class="max-w-4xl mx-auto px-6 py-8 space-y-6">
+        <div class="fu fu1 flex items-center justify-between">
+          <div>
+            <h1 class="font-bold text-xl text-ink">지원자 관리</h1>
+            <p class="text-sm text-ink-3 mt-1">총 7명 · 검토 대기 2명</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select class="text-[12.5px] text-ink-3 border border-ink-6 bg-white rounded-lg px-3 py-2 outline-none cursor-pointer">
+              <option>전체 공고</option>
+              <option>프론트엔드 개발 인턴</option>
+              <option>마케팅 인턴</option>
+            </select>
+            <select class="text-[12.5px] text-ink-3 border border-ink-6 bg-white rounded-lg px-3 py-2 outline-none cursor-pointer">
+              <option>매칭순</option><option>최신순</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Kanban pipeline header -->
+        <div class="fu fu2 grid grid-cols-4 gap-3 text-center">
+          <div class="bg-ink-7 rounded-xl py-2.5">
+            <div class="text-[11px] font-semibold text-ink-3 uppercase tracking-wider">서류 검토</div>
+            <div class="font-mono font-bold text-[18px] text-ink mt-0.5">3</div>
+          </div>
+          <div class="bg-brand-50 rounded-xl py-2.5">
+            <div class="text-[11px] font-semibold text-brand-500 uppercase tracking-wider">면접 예정</div>
+            <div class="font-mono font-bold text-[18px] text-brand-600 mt-0.5">2</div>
+          </div>
+          <div class="bg-ok/10 rounded-xl py-2.5">
+            <div class="text-[11px] font-semibold text-ok uppercase tracking-wider">최종 후보</div>
+            <div class="font-mono font-bold text-[18px] text-ok mt-0.5">1</div>
+          </div>
+          <div class="bg-ink-7 rounded-xl py-2.5">
+            <div class="text-[11px] font-semibold text-ink-4 uppercase tracking-wider">불합격</div>
+            <div class="font-mono font-bold text-[18px] text-ink-4 mt-0.5">1</div>
+          </div>
+        </div>
+
+        <div class="space-y-3 fu fu3" id="all-cands"></div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: Positions ──────────────────────────────────────── -->
+    <div id="view-positions" class="hidden">
+      <div class="max-w-3xl mx-auto px-6 py-8 space-y-6">
+        <div class="fu fu1 flex items-center justify-between">
+          <h1 class="font-bold text-xl text-ink">공고 관리</h1>
+          <button class="btn-primary flex items-center gap-2" onclick="openPostModal()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            새 공고 등록
+          </button>
+        </div>
+        <div class="space-y-4" id="all-positions"></div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: Company ────────────────────────────────────────── -->
+    <div id="view-company" class="hidden">
+      <div class="max-w-2xl mx-auto px-6 py-8 space-y-6">
+        <div class="fu fu1 flex items-center justify-between">
+          <h1 class="font-bold text-xl text-ink">회사 프로필</h1>
+          <button class="btn-primary text-sm px-4 py-2">수정하기</button>
+        </div>
+
+        <div class="card fu fu2" id="co-profile-card"></div>
+        <div class="card fu fu3 space-y-3" id="co-profile-stats"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Post position modal ──────────────────────────────────────── -->
+<div id="post-modal" onclick="closePostModal(event)">
+  <div class="modal-box">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-bold text-[17px] text-ink">새 공고 등록</h2>
+      <button onclick="closePostModal()" class="w-8 h-8 rounded-lg hover:bg-ink-8 flex items-center justify-center text-ink-4" style="transition:background 0.12s">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="field-label">포지션명</label>
+        <input class="field-input" placeholder="프론트엔드 개발 인턴" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="field-label">직무 분야</label>
+          <select class="field-input">
+            <option>개발</option><option>디자인</option><option>마케팅</option><option>기획</option><option>데이터</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">근무 기간</label>
+          <select class="field-input">
+            <option>3개월</option><option>6개월</option><option>장기</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="field-label">월 급여 (만원)</label>
+          <input class="field-input" placeholder="180" type="number" />
+        </div>
+        <div>
+          <label class="field-label">마감일</label>
+          <input class="field-input" type="date" />
+        </div>
+      </div>
+      <div>
+        <label class="field-label">근무 위치</label>
+        <input class="field-input" placeholder="서울 성수 · 원격 가능" />
+      </div>
+      <div>
+        <label class="field-label">업무 설명</label>
+        <textarea class="field-input" placeholder="어떤 일을 함께 하게 될지 구체적으로 적어주세요."></textarea>
+      </div>
+      <div>
+        <label class="field-label">우대 사항</label>
+        <textarea class="field-input" style="min-height:60px" placeholder="React, TypeScript 경험자 우대"></textarea>
+      </div>
+
+      <div class="bg-brand-50 rounded-xl p-3 text-[12.5px] text-brand-600">
+        💡 구체적인 업무 설명을 작성할수록 매칭 정확도가 올라갑니다.
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button class="flex-1 py-3 rounded-xl border border-ink-6 text-sm font-medium text-ink-3 hover:bg-ink-8" style="transition:background 0.12s" onclick="closePostModal()">취소</button>
+        <button class="flex-1 btn-primary py-3" onclick="submitPost()">공고 등록하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Session guard ─────────────────────────────────────────────
+  const _session = DB.auth.getSession();
+  if(!_session) window.location.replace('auth.html');
+
+  // ── View switching ─────────────────────────────────────────────
+  const views=['overview','candidates','positions','company'];
+  function showView(v){
+    views.forEach(id=>{
+      const el=document.getElementById('view-'+id);
+      if(el) el.classList.toggle('hidden',id!==v);
+    });
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    event?.currentTarget?.classList.add('active');
+  }
+
+  // ── Data (DB 기반) ─────────────────────────────────────────────
+  const candidates = DB.candidates;
+  const positions   = DB.positions;
+
+  const statusMap = {
+    review: { label:'서류 검토', badge:'badge-gray' },
+    interview: { label:'면접 예정', badge:'badge-blue' },
+    finalist: { label:'최종 후보', badge:'badge-green' },
+    rejected: { label:'불합격', badge:'badge-red' },
+  };
+
+  function avatarColor(name){ const colors=['#1952D9','#059669','#F5621A','#7C3AED','#0891B2','#DB2777']; return colors[name.charCodeAt(0)%colors.length]; }
+
+  function buildCandCard(c, idx, full=false){
+    const s = statusMap[c.status];
+    return `
+      <div class="cand-card ${c.status==='interview'?'shortlisted':c.status==='finalist'?'interviewed':''} fu fu${(idx%5)+2}" style="animation-delay:${idx*0.05+0.05}s" onclick="openCandPanel(${idx})">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style="background:${avatarColor(c.name)}">${c.name[0]}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-[14px] text-ink">${c.name}</span>
+              ${c.verified?'<span class="badge badge-green text-[10px]">✓ 인증</span>':''}
+              <span class="badge ${s.badge} text-[10.5px] ml-auto">${s.label}</span>
+            </div>
+            <div class="text-[12.5px] text-ink-3 mt-0.5">${c.school} · ${c.role}</div>
+            <div class="flex items-center gap-2 mt-2">
+              <div class="flex-1 score-bar"><div class="score-fill" style="width:${c.score}%;background:${c.score>=80?'#059669':c.score>=65?'#1952D9':'#9C9B99'}"></div></div>
+              <span class="text-[11.5px] font-mono font-bold" style="color:${c.score>=80?'#059669':c.score>=65?'#1952D9':'#9C9B99'}">${c.score}%</span>
+            </div>
+          </div>
+        </div>
+        ${full ? `<div class="flex flex-wrap gap-1.5 mt-3">${c.tags.map(t=>'<span class="badge badge-gray">'+t+'</span>').join('')}</div>` : ''}
+        ${full ? `<div class="flex gap-2 mt-3">
+          <button class="text-[12px] font-medium text-ink-3 border border-ink-6 rounded-lg px-3 py-1.5 hover:border-brand-200 hover:text-brand-500" style="transition:border-color 0.15s,color 0.15s" onclick="event.stopPropagation();moveStage(${idx})">단계 이동</button>
+          <button class="text-[12px] font-medium text-brand-500 border border-brand-200 rounded-lg px-3 py-1.5 hover:bg-brand-50" style="transition:background 0.15s" onclick="event.stopPropagation();sendMessage(${idx})">메시지 보내기</button>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  function buildRecentCands(){
+    const el=document.getElementById('recent-cands');
+    el.innerHTML = candidates.slice(0,4).map((c,i)=>buildCandCard(c,i,false)).join('');
+  }
+
+  function buildAllCands(){
+    const el=document.getElementById('all-cands');
+    el.innerHTML = candidates.map((c,i)=>buildCandCard(c,i,true)).join('');
+  }
+
+  function buildPositions(elId){
+    const el=document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = positions.map((p,i)=>`
+      <div class="card fu fu${i+2}" style="animation-delay:${i*0.06}s">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold text-[15px] text-ink">${p.title}</div>
+            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span class="badge badge-gray">${p.field}</span>
+              <span class="text-[12px] text-ink-4">${p.period}</span>
+              <span class="text-[12px] text-ink-4">·</span>
+              <span class="text-[12px] text-ink-4">${p.pay}</span>
+            </div>
+          </div>
+          <span class="${p.active?'badge-green':'badge-gray'} badge">${p.active?'모집중':'마감'}</span>
+        </div>
+        <div class="mt-4 flex items-center justify-between text-[12.5px]">
+          <div class="flex items-center gap-3 text-ink-4">
+            <span class="font-mono">마감 ${p.deadline}</span>
+            <span>·</span>
+            <span class="text-brand-500 font-semibold">${p.applicants}명 지원</span>
+          </div>
+          <button class="text-[12px] text-brand-500 font-medium hover:underline" onclick="showView('candidates')">지원자 보기 →</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  buildRecentCands();
+  buildAllCands();
+  buildPositions('active-positions');
+  buildPositions('all-positions');
+
+  // ── Company init from DB ───────────────────────────────────────
+  (function(){
+    const co = DB.currentCompany;
+    const sbAv = document.getElementById('co-sb-avatar');
+    const sbNm = document.getElementById('co-sb-name');
+    const greet = document.getElementById('co-greeting');
+    if(sbAv){ sbAv.textContent=co.logo; sbAv.style.background=co.logoColor; }
+    if(sbNm) sbNm.textContent = co.name;
+    if(greet) greet.textContent = '안녕하세요, '+co.shortName+' 👋';
+
+    const profileCard = document.getElementById('co-profile-card');
+    if(profileCard) profileCard.innerHTML = `
+      <div class="flex items-center gap-4 mb-5">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-display text-2xl" style="background:${co.logoColor}">${co.logo}</div>
+        <div>
+          <h2 class="font-bold text-lg text-ink">${co.name}</h2>
+          <p class="text-ink-3 text-sm">${co.region} · 스타트업 · ${co.size}</p>
+          <span class="badge badge-green text-[10.5px] mt-1">✓ 사업자 인증 완료</span>
+        </div>
+      </div>
+      <div class="border-t border-ink-7 pt-4 space-y-3 text-[13.5px]">
+        <div class="flex gap-4"><span class="text-ink-3 w-24 flex-shrink-0">소개</span><span class="text-ink-2">${co.description}</span></div>
+        <div class="flex gap-4"><span class="text-ink-3 w-24 flex-shrink-0">웹사이트</span><a href="#" class="text-brand-500 hover:underline">${co.website}</a></div>
+        <div class="flex gap-4"><span class="text-ink-3 w-24 flex-shrink-0">채용 단계</span><span class="text-ink-2">${co.stage}</span></div>
+      </div>`;
+
+    const statsCard = document.getElementById('co-profile-stats');
+    if(statsCard) statsCard.innerHTML = `
+      <h3 class="font-semibold text-[14px] text-ink">채용 통계</h3>
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div><div class="font-mono font-bold text-xl text-ink">${co.stats.totalApplicants}</div><div class="text-[11px] text-ink-4 mt-0.5">누적 지원자</div></div>
+        <div class="border-x border-ink-7"><div class="font-mono font-bold text-xl text-ink">${co.stats.hired}</div><div class="text-[11px] text-ink-4 mt-0.5">채용 완료</div></div>
+        <div><div class="font-mono font-bold text-xl text-brand-500">${co.stats.avgResponse}</div><div class="text-[11px] text-ink-4 mt-0.5">평균 응답</div></div>
+      </div>`;
+  })();
+
+  // ── Candidate detail panel ────────────────────────────────────
+  function openCandPanel(idx){
+    const c = candidates[idx];
+    const s = statusMap[c.status];
+    const body = document.getElementById('cand-panel-body');
+    body.innerHTML = `
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-display text-2xl" style="background:${avatarColor(c.name)}">${c.name[0]}</div>
+        <div>
+          <div class="font-bold text-[18px] text-ink">${c.name}</div>
+          <div class="text-[13px] text-ink-3 mt-0.5">${c.school}</div>
+          <div class="flex gap-2 mt-2">
+            <span class="badge badge-green text-[10.5px]">✓ 학교 인증</span>
+            <span class="badge ${s.badge} text-[10.5px]">${s.label}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-ink-8 rounded-xl p-4 space-y-2 text-[13px]">
+        <div class="flex justify-between"><span class="text-ink-3">지원 포지션</span><span class="font-medium text-ink">${c.role}</span></div>
+        <div class="flex justify-between"><span class="text-ink-3">매칭 점수</span><span class="font-bold" style="color:${c.score>=80?'#059669':c.score>=65?'#1952D9':'#9C9B99'}">${c.score}%</span></div>
+        <div class="flex justify-between"><span class="text-ink-3">지원 일시</span><span class="font-mono text-ink">2025.05.14</span></div>
+      </div>
+
+      <div>
+        <p class="text-[12px] font-semibold text-ink-3 uppercase tracking-wider mb-2">스킬 / 관심사</p>
+        <div class="flex flex-wrap gap-2">${c.tags.map(t=>'<span class="badge badge-blue">'+t+'</span>').join('')}</div>
+      </div>
+
+      <div>
+        <p class="text-[12px] font-semibold text-ink-3 uppercase tracking-wider mb-2">한 줄 소개</p>
+        <p class="text-[13.5px] text-ink-2 italic">"스타트업에서 실제 프로덕트를 만들어보고 싶은 ${c.school.split(' ')[0]} 학생입니다."</p>
+      </div>
+
+      <div class="space-y-2 pt-2">
+        <button class="w-full btn-primary py-3 text-sm" onclick="moveStage(${idx})">다음 단계로 이동</button>
+        <button class="w-full py-3 rounded-xl border border-brand-200 text-[13.5px] font-semibold text-brand-500 hover:bg-brand-50" style="transition:background 0.12s" onclick="sendMessage(${idx})">메시지 보내기</button>
+        <button class="w-full py-3 rounded-xl border border-ink-6 text-[13.5px] font-medium text-ink-3 hover:bg-ink-8" style="transition:background 0.12s">불합격 처리</button>
+      </div>
+    `;
+    document.getElementById('cand-panel').classList.add('open');
+  }
+  function closeCandPanel(){ document.getElementById('cand-panel').classList.remove('open'); }
+
+  const stageOrder = ['review','interview','finalist'];
+  function moveStage(idx){
+    const c = candidates[idx];
+    const cur = stageOrder.indexOf(c.status);
+    if(cur<stageOrder.length-1){ c.status=stageOrder[cur+1]; buildAllCands(); buildRecentCands(); showToast('✓ '+c.name+' — '+statusMap[c.status].label); closeCandPanel(); }
+  }
+  function sendMessage(idx){ showToast('메시지 작성 창 열기...'); }
+
+  // ── Modal ─────────────────────────────────────────────────────
+  function openPostModal(){ document.getElementById('post-modal').classList.add('open'); }
+  function closePostModal(e){
+    if(e && e.target!==document.getElementById('post-modal')) return;
+    document.getElementById('post-modal').classList.remove('open');
+  }
+  function submitPost(){
+    document.getElementById('post-modal').classList.remove('open');
+    showToast('✓ 공고가 등록되었습니다.');
+  }
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeCandPanel(); closePostModal(); } });
+
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),3000);
+  }
+</script>
+</body>
+</html>
