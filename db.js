@@ -1,5 +1,5 @@
 // db.js — 딸깍 데이터 스토어
-// NoSQL 스타일 인메모리 컬렉션 + 인증/테마 유틸리티
+// localStorage 기반 CRUD 컬렉션 + 인증/테마 유틸리티
 
 const DB = {
 
@@ -41,50 +41,120 @@ const DB = {
     { id:'kangwon',  name:'강원대학교',       shortName:'강원대',     domains:['kangwon.ac.kr'],                    region:'춘천',   color:'#007B40' },
   ],
 
-  /* ── 공고 컬렉션 ────────────────────────────────────────────── */
-  jobs: [
-    { id:'job_001', company:'토스 (Viva Republica)', logo:'T', logoBg:'#EBF3FF', logoColor:'#0064FF', role:'그로스 마케팅 인턴',      score:91, tags:['마케팅','그로스해킹','SQL'],          period:'3개월', pay:'월 220만원', deadline:'6.15', loc:'서울 강남 (하이브리드)', status:'new' },
-    { id:'job_002', company:'당근마켓',               logo:'당', logoBg:'#FFF0E6', logoColor:'#FF6F0F', role:'UX 리서치 인턴',          score:84, tags:['UX','사용자조사','Notion'],          period:'3개월', pay:'월 200만원', deadline:'6.20', loc:'원격 가능',             status:'new' },
-    { id:'job_003', company:'무신사',                 logo:'무', logoBg:'#F0F0F0', logoColor:'#1A1A1A', role:'콘텐츠 마케팅 인턴',      score:77, tags:['콘텐츠','SNS','카피라이팅'],         period:'3개월', pay:'월 180만원', deadline:'6.25', loc:'서울 성수',             status:''    },
-    { id:'job_004', company:'오늘의집',               logo:'오', logoBg:'#E8F8F3', logoColor:'#00A880', role:'데이터 분석 인턴',         score:68, tags:['데이터','Python','SQL'],            period:'6개월', pay:'월 190만원', deadline:'7.01', loc:'서울 역삼',             status:''    },
-    { id:'job_005', company:'뱅크샐러드',             logo:'뱅', logoBg:'#E8F5E9', logoColor:'#2E7D32', role:'프로덕트 기획 인턴',      score:73, tags:['기획','PM','Figma'],               period:'3개월', pay:'월 185만원', deadline:'7.10', loc:'서울 종로',             status:''    },
-    { id:'job_006', company:'직방',                   logo:'직', logoBg:'#FFE8EC', logoColor:'#FF385C', role:'프론트엔드 개발 인턴',    score:62, tags:['React','TypeScript','CSS'],         period:'6개월', pay:'월 200만원', deadline:'7.15', loc:'서울 서초',             status:''    },
-    { id:'job_007', company:'클래스101',              logo:'클', logoBg:'#FFF3EE', logoColor:'#FF6B35', role:'퍼포먼스 마케팅 인턴',    score:79, tags:['퍼포먼스마케팅','Meta광고','GA4'],    period:'3개월', pay:'월 175만원', deadline:'7.05', loc:'서울 강남',             status:'new' },
-    { id:'job_008', company:'마이리얼트립',           logo:'마', logoBg:'#E8F0FE', logoColor:'#1A73E8', role:'사업개발 인턴',           score:65, tags:['BizDev','기획','영어'],             period:'3개월', pay:'월 180만원', deadline:'7.20', loc:'서울 합정',             status:''    },
-  ],
+  /* ── localStorage 키 ────────────────────────────────────────── */
+  _jobsKey:    'ttalkkak_jobs',
+  _appsKey:    'ttalkkak_applications',
+  _msgsKey:    'ttalkkak_messages',
 
-  /* ── 지원 이력 컬렉션 ───────────────────────────────────────── */
-  applications: [
-    { id:'app_001', company:'토스 (Viva Republica)', logo:'T',  logoBg:'#EBF3FF', logoColor:'#0064FF', role:'그로스 마케팅 인턴',   status:'review',    appliedDate:'2026.05.20', deadline:'6.15', matchScore:91 },
-    { id:'app_002', company:'당근마켓',               logo:'당', logoBg:'#FFF0E6', logoColor:'#FF6F0F', role:'UX 리서치 인턴',       status:'interview', appliedDate:'2026.05.18', deadline:'6.20', matchScore:84, interviewNote:'6월 3일 오후 3시 · 화상면접' },
-    { id:'app_003', company:'클래스101',              logo:'클', logoBg:'#FFF3EE', logoColor:'#FF6B35', role:'퍼포먼스 마케팅 인턴', status:'review',    appliedDate:'2026.05.22', deadline:'7.05', matchScore:79 },
-  ],
+  /* ── Jobs CRUD ──────────────────────────────────────────────── */
+  getJobs(filter) {
+    filter = filter || {};
+    try {
+      let jobs = JSON.parse(localStorage.getItem(this._jobsKey) || '[]');
+      if(filter.companyEmail) jobs = jobs.filter(j => j.companyEmail === filter.companyEmail);
+      if(filter.active !== undefined) jobs = jobs.filter(j => j.active === filter.active);
+      return jobs;
+    } catch { return []; }
+  },
+  saveJob(job) {
+    const jobs = this.getJobs();
+    const idx = jobs.findIndex(j => j.id === job.id);
+    if(idx >= 0) jobs[idx] = job; else jobs.push(job);
+    localStorage.setItem(this._jobsKey, JSON.stringify(jobs));
+  },
+  deleteJob(id) {
+    const jobs = this.getJobs().filter(j => j.id !== id);
+    localStorage.setItem(this._jobsKey, JSON.stringify(jobs));
+  },
 
-  /* ── 지원자 컬렉션 (기업 뷰) ────────────────────────────────── */
-  candidates: [
-    { id:'cand_001', name:'김태현', school:'연세대 컴공 3학년',    email:'taehyun.kim@yonsei.ac.kr',  role:'프론트엔드 개발 인턴', score:94, status:'interview', tags:['React','TypeScript','Next.js'],   verified:true, bio:'React 기반 사이드 프로젝트 3개를 완성한 연세대 컴공 3학년입니다.',   appliedDate:'2026.05.14' },
-    { id:'cand_002', name:'박지수', school:'KAIST 전산 2학년',     email:'jisu.park@kaist.ac.kr',      role:'프론트엔드 개발 인턴', score:88, status:'review',    tags:['Vue.js','Python','AI/ML'],       verified:true, bio:'머신러닝과 웹 개발을 함께 공부 중인 KAIST 전산학부 2학년입니다.',  appliedDate:'2026.05.16' },
-    { id:'cand_003', name:'이채원', school:'서울대 경영 3학년',    email:'chaewon.lee@snu.ac.kr',      role:'마케팅 인턴',          score:82, status:'finalist',  tags:['마케팅','SQL','Tableau'],         verified:true, bio:'데이터 기반 마케팅에 관심 많은 서울대 경영학과 3학년입니다.',      appliedDate:'2026.05.12' },
-    { id:'cand_004', name:'최민준', school:'고려대 경영 2학년',    email:'minjun.choi@korea.ac.kr',    role:'마케팅 인턴',          score:76, status:'review',    tags:['SNS운영','영상편집','Adobe'],     verified:true, bio:'유튜브 채널 운영 경험 있는 고려대 경영학과 2학년입니다.',          appliedDate:'2026.05.17' },
-    { id:'cand_005', name:'정하은', school:'성균관대 통계 3학년',  email:'haeun.jung@g.skku.edu',      role:'프론트엔드 개발 인턴', score:71, status:'review',    tags:['SQL','Python','R'],              verified:true, bio:'데이터 분석·시각화에 강점 있는 성균관대 통계학과 3학년입니다.',   appliedDate:'2026.05.18' },
-    { id:'cand_006', name:'윤서연', school:'한양대 광고홍보 2학년',email:'seoyeon.yoon@hanyang.ac.kr', role:'마케팅 인턴',          score:67, status:'rejected',  tags:['카피라이팅','SNS','Canva'],       verified:true, bio:'광고 공모전 수상 경험 있는 한양대 광고홍보학과 2학년입니다.',      appliedDate:'2026.05.19' },
-    { id:'cand_007', name:'강지훈', school:'서강대 경제 3학년',    email:'jihun.kang@sogang.ac.kr',    role:'프론트엔드 개발 인턴', score:85, status:'interview', tags:['React','AWS','Node.js'],          verified:true, bio:'AWS 자격증을 취득한 서강대 경제학과 3학년 개발자입니다.',         appliedDate:'2026.05.15' },
-  ],
+  /* ── Applications CRUD ──────────────────────────────────────── */
+  getApplications(filter) {
+    filter = filter || {};
+    try {
+      let apps = JSON.parse(localStorage.getItem(this._appsKey) || '[]');
+      if(filter.studentEmail) apps = apps.filter(a => a.studentEmail === filter.studentEmail);
+      if(filter.companyEmail) apps = apps.filter(a => a.companyEmail === filter.companyEmail);
+      if(filter.jobId) apps = apps.filter(a => a.jobId === filter.jobId);
+      return apps;
+    } catch { return []; }
+  },
+  createApplication(data) {
+    if(this.hasApplied(data.studentEmail, data.jobId)) return null;
+    const apps = this.getApplications();
+    const app = Object.assign({ id: 'app_' + Date.now(), status: 'review', createdAt: Date.now() }, data);
+    apps.push(app);
+    localStorage.setItem(this._appsKey, JSON.stringify(apps));
+    return app;
+  },
+  updateApplication(id, updates) {
+    try {
+      const apps = JSON.parse(localStorage.getItem(this._appsKey) || '[]');
+      const idx = apps.findIndex(a => a.id === id);
+      if(idx >= 0) {
+        apps[idx] = Object.assign({}, apps[idx], updates);
+        localStorage.setItem(this._appsKey, JSON.stringify(apps));
+        return apps[idx];
+      }
+      return null;
+    } catch { return null; }
+  },
+  hasApplied(studentEmail, jobId) {
+    return this.getApplications({ studentEmail, jobId }).length > 0;
+  },
 
-  /* ── 채용 공고 컬렉션 (기업 뷰) ────────────────────────────── */
-  positions: [
-    { id:'pos_001', title:'프론트엔드 개발 인턴', field:'개발',    period:'6개월', pay:'월 200만원', deadline:'2026.06.30', applicants:4, active:true, location:'서울 성수 (하이브리드)' },
-    { id:'pos_002', title:'마케팅 인턴 (그로스)', field:'마케팅', period:'3개월', pay:'월 180만원', deadline:'2026.07.15', applicants:3, active:true, location:'서울 성수' },
-  ],
+  /* ── Messages CRUD ──────────────────────────────────────────── */
+  getMessages(userEmail) {
+    try {
+      const msgs = JSON.parse(localStorage.getItem(this._msgsKey) || '[]');
+      return msgs.filter(m => m.from === userEmail || m.to === userEmail)
+                 .sort((a,b) => b.timestamp - a.timestamp);
+    } catch { return []; }
+  },
+  getThreads(userEmail) {
+    const msgs = this.getMessages(userEmail);
+    const seen = new Set();
+    const threads = [];
+    msgs.forEach(m => {
+      const partner = m.from === userEmail ? m.to : m.from;
+      if(!seen.has(partner)) { seen.add(partner); threads.push(m); }
+    });
+    return threads;
+  },
+  getConversation(email1, email2) {
+    try {
+      const msgs = JSON.parse(localStorage.getItem(this._msgsKey) || '[]');
+      return msgs.filter(m =>
+        (m.from === email1 && m.to === email2) ||
+        (m.from === email2 && m.to === email1)
+      ).sort((a,b) => a.timestamp - b.timestamp);
+    } catch { return []; }
+  },
+  sendMessage(from, to, subject, text) {
+    try {
+      const msgs = JSON.parse(localStorage.getItem(this._msgsKey) || '[]');
+      const msg = { id:'msg_'+Date.now()+'_'+Math.random().toString(36).slice(2), from, to, subject: subject||'', text, timestamp: Date.now(), read: false };
+      msgs.push(msg);
+      localStorage.setItem(this._msgsKey, JSON.stringify(msgs));
+      return msg;
+    } catch { return null; }
+  },
+  markRead(msgId) {
+    try {
+      const msgs = JSON.parse(localStorage.getItem(this._msgsKey) || '[]');
+      const idx = msgs.findIndex(m => m.id === msgId);
+      if(idx >= 0) { msgs[idx].read = true; localStorage.setItem(this._msgsKey, JSON.stringify(msgs)); }
+    } catch {}
+  },
+  getUnread(userEmail) {
+    try {
+      const msgs = JSON.parse(localStorage.getItem(this._msgsKey) || '[]');
+      return msgs.filter(m => m.to === userEmail && !m.read);
+    } catch { return []; }
+  },
 
-  /* ── 기본 학생/기업 (로그인 없이 앱 진입 시 폴백 없음) ──────── */
-  currentStudent: null,
-  currentCompany: {
-    name:'뤼튼 테크놀로지스', shortName:'뤼튼',
-    logo:'W', logoColor:'#7C3AED', logoBg:'#F3EEFF',
-    description:'AI 글쓰기 어시스턴트 뤼튼(wrtn.ai)을 개발하는 생성형 AI 스타트업입니다.',
-    website:'wrtn.ai', size:'11-50명', region:'서울 강남', stage:'서류 → 과제 → 면접',
-    stats:{ totalApplicants:12, hired:2, avgResponse:'2.8일' },
+  /* ── Students helper ────────────────────────────────────────── */
+  getStudents() {
+    return this.auth.getAll().filter(u => u.type === 'student');
   },
 
   /* ── 유틸리티: 대학 도메인 ──────────────────────────────────── */
@@ -126,6 +196,84 @@ const DB = {
     clearSession() {
       localStorage.removeItem(this._sessionKey);
     },
+  },
+
+  /* ── 데모 계정 시드 ─────────────────────────────────────────── */
+  seedDemo() {
+    const users = this.auth.getAll();
+    if(users.length === 0) {
+      const demos = [
+        {
+          email:'student@yonsei.ac.kr', password:'demo1234',
+          name:'김민서', type:'student',
+          schoolId:'yonsei', schoolName:'연세대학교', schoolColor:'#00256C',
+          bio:'UX와 데이터 기반 마케팅에 관심 많은 경영학도입니다.', year:'3학년', major:'경영학과',
+          portfolio:'', interests:['마케팅','기획','데이터'],
+          avatar:'김', profileCompletion:75, verified:true, createdAt:Date.now(),
+        },
+        {
+          email:'company@wrtn.ai', password:'demo1234',
+          name:'이준혁', type:'company',
+          companyName:'뤼튼 테크놀로지스', companyShortName:'뤼튼',
+          logo:'W', logoColor:'#7C3AED', logoBg:'#F3EEFF',
+          description:'AI 글쓰기 어시스턴트 뤼튼(wrtn.ai)을 개발하는 생성형 AI 스타트업입니다.',
+          website:'wrtn.ai', size:'11-50명', region:'서울 강남', stage:'서류 → 과제 → 면접',
+          bizno:'000-00-00000',
+          avatar:'이', profileCompletion:80, verified:true, createdAt:Date.now(),
+        },
+      ];
+      demos.forEach(u => { if(!users.find(x=>x.email===u.email)) users.push(u); });
+      localStorage.setItem(this.auth._key, JSON.stringify(users));
+    }
+
+    // Seed demo jobs if none exist
+    if(this.getJobs().length === 0) {
+      const demoJobs = [
+        {
+          id:'job_001', companyEmail:'company@wrtn.ai',
+          companyName:'뤼튼 테크놀로지스', companyShortName:'뤼튼',
+          logo:'W', logoBg:'#F3EEFF', logoColor:'#7C3AED',
+          title:'AI 프로덕트 기획 인턴', role:'AI 프로덕트 기획 인턴',
+          company:'뤼튼 테크놀로지스',
+          tags:['기획','AI','UX리서치','Figma'],
+          period:'3개월', pay:'월 200만원',
+          deadline:'2026.07.15', loc:'서울 강남 (하이브리드)',
+          description:'생성형 AI 서비스의 사용자 경험을 기획하고 개선합니다.',
+          preferred:'Figma 사용 경험, AI 서비스 관심',
+          active:true, status:'new', field:'기획',
+          createdAt: Date.now() - 86400000 * 2,
+        },
+        {
+          id:'job_002', companyEmail:'company@wrtn.ai',
+          companyName:'뤼튼 테크놀로지스', companyShortName:'뤼튼',
+          logo:'W', logoBg:'#F3EEFF', logoColor:'#7C3AED',
+          title:'그로스 마케팅 인턴', role:'그로스 마케팅 인턴',
+          company:'뤼튼 테크놀로지스',
+          tags:['마케팅','그로스해킹','SQL','데이터'],
+          period:'3개월', pay:'월 185만원',
+          deadline:'2026.07.20', loc:'서울 강남',
+          description:'사용자 획득 및 리텐션 전략을 데이터 기반으로 수립합니다.',
+          preferred:'SQL 기초, 마케팅 경험',
+          active:true, status:'new', field:'마케팅',
+          createdAt: Date.now() - 86400000,
+        },
+        {
+          id:'job_003', companyEmail:'company@wrtn.ai',
+          companyName:'뤼튼 테크놀로지스', companyShortName:'뤼튼',
+          logo:'W', logoBg:'#F3EEFF', logoColor:'#7C3AED',
+          title:'프론트엔드 개발 인턴', role:'프론트엔드 개발 인턴',
+          company:'뤼튼 테크놀로지스',
+          tags:['React','TypeScript','개발','CSS'],
+          period:'6개월', pay:'월 220만원',
+          deadline:'2026.08.01', loc:'서울 강남 (하이브리드)',
+          description:'React 기반 AI 서비스 프론트엔드를 개발합니다.',
+          preferred:'React, TypeScript 경험자 우대',
+          active:true, status:'', field:'개발',
+          createdAt: Date.now(),
+        },
+      ];
+      demoJobs.forEach(j => this.saveJob(j));
+    }
   },
 
   /* ── 유틸리티: 학교 테마 색상 적용 ─────────────────────────── */
@@ -173,3 +321,5 @@ const DB = {
     `;
   },
 };
+
+DB.seedDemo();
